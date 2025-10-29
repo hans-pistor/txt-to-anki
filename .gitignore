@@ -1,0 +1,33 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+*.egg
+
+# Testing
+.coverage
+.pytest_cache/
+htmlcov/
+
+# Virtual environments
+.env
+.venv
+venv/
+env/
+
+# Type checking
+.mypy_cache/
+
+# IDEs
+.idea/
+.vscode/
+
+# Project specific
+*.apkg
+*.anki2

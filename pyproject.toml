@@ -1,0 +1,50 @@
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry]
+name = "txt-to-anki"
+version = "0.1.0"
+description = "A CLI tool for converting plain text files into Anki deck formats for spaced repetition learning"
+authors = ["Your Name <your.email@example.com>"]
+readme = "README.md"
+packages = [{include = "txt_to_anki", from = "src"}]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+typer = "^0.12.0"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^7.4.0"
+pytest-cov = "^4.1.0"
+black = "^23.0.0"
+ruff = "^0.1.0"
+mypy = "^1.5.0"
+
+[tool.poetry.scripts]
+txt-to-anki = "txt_to_anki.cli:app"
+
+[tool.black]
+line-length = 88
+target-version = ['py310']
+
+[tool.ruff]
+target-version = "py310"
+line-length = 88
+
+[tool.mypy]
+python_version = "3.10"
+strict = true
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+disallow_untyped_decorators = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = "--cov=src --cov-report=term-missing"
