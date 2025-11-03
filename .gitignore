@@ -28,6 +28,9 @@ env/
 .idea/
 .vscode/
 
+# Documentation
+docs/_build/
+
 # Project specific
 *.apkg
 *.anki2

@@ -62,6 +62,7 @@ poetry run txt-to-anki convert sample.txt
 - **Lint code**: `poetry run ruff check .`
 - **Type check**: `poetry run mypy src/`
 - **Build package**: `poetry build`
+- **Build docs**: `poetry run sphinx-build -b html docs docs/_build/html`
 
 ### Code Quality
 
