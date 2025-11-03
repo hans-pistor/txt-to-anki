@@ -18,13 +18,8 @@ from txt_to_anki.tokenizer.exceptions import (
     TokenizationError,
     TokenizerInitializationError,
 )
+from txt_to_anki.tokenizer.filters.protocol import TokenFilter
 from txt_to_anki.tokenizer.token_models import Token
-
-# Type hint for filter protocol
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from txt_to_anki.tokenizer.filters.protocol import TokenFilter
 
 
 class TokenizationMode(Enum):
