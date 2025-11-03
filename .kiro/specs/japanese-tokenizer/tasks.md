@@ -7,7 +7,7 @@
   - Verify setup by importing SudachiPy and initializing a basic tokenizer
   - _Requirements: 4.1, 4.2_
 
-- [ ] 2. Implement basic text tokenization functionality
+- [x] 2. Implement basic text tokenization functionality
   - Create Token dataclass with required fields as needed for Sudachi integration
   - Implement JapaneseTokenizer class with tokenize_text method
   - Initialize Sudachi tokenizer with default mode
