@@ -23,10 +23,49 @@ from txt_to_anki.tokenizer.token_models import Token
 class TokenizationMode(Enum):
     """Tokenization granularity modes for Sudachi.
 
+    Sudachi provides three tokenization modes that control how text is segmented
+    into tokens. The modes differ in their treatment of compound words and
+    multi-morpheme expressions.
+
     Attributes:
         SHORT: Mode A - Short unit tokenization (finest granularity)
-        MEDIUM: Mode B - Medium unit tokenization (balanced)
+            Splits text into the smallest meaningful units. Compound words and
+            multi-morpheme expressions are broken down into individual morphemes.
+            Best for: Detailed linguistic analysis, learning individual morphemes.
+            Example: "東京都" → ["東京", "都"] (Tokyo + Metropolitan)
+
+        MEDIUM: Mode B - Medium unit tokenization (balanced, default)
+            Provides balanced tokenization suitable for most use cases. Keeps
+            common compound words together while splitting complex expressions.
+            Best for: General vocabulary extraction, Anki deck creation.
+            Example: "東京都" → ["東京都"] (Tokyo Metropolitan)
+
         LONG: Mode C - Long unit tokenization (coarsest granularity)
+            Keeps compound words and multi-morpheme expressions together as
+            single tokens. Produces fewer, longer tokens.
+            Best for: Reading comprehension, phrase-level vocabulary.
+            Example: "国際連合" → ["国際連合"] (United Nations as one token)
+
+    Mode Comparison Example:
+        Text: "国際連合本部ビルに行きました。"
+        (I went to the United Nations Headquarters building.)
+
+        SHORT mode (Mode A):
+            ["国際", "連合", "本部", "ビル", "に", "行き", "まし", "た", "。"]
+            (9 tokens - finest granularity)
+
+        MEDIUM mode (Mode B):
+            ["国際連合", "本部", "ビル", "に", "行き", "まし", "た", "。"]
+            (8 tokens - balanced)
+
+        LONG mode (Mode C):
+            ["国際連合本部ビル", "に", "行きました", "。"]
+            (4 tokens - coarsest granularity)
+
+    Choosing a Mode:
+        - Use SHORT for learning individual kanji compounds and morphemes
+        - Use MEDIUM (default) for general vocabulary extraction
+        - Use LONG for learning phrases and compound expressions
     """
 
     SHORT = "A"
@@ -41,15 +80,51 @@ class JapaneseTokenizer:
     with comprehensive linguistic metadata including dictionary forms, readings,
     and part-of-speech information.
 
+    The tokenizer supports three granularity modes (SHORT, MEDIUM, LONG) that
+    control how compound words and multi-morpheme expressions are segmented.
+    See TokenizationMode for detailed mode descriptions.
+
     Attributes:
         mode: The tokenization mode (SHORT, MEDIUM, or LONG)
         dictionary_type: The Sudachi dictionary type being used
 
-    Example:
-        >>> tokenizer = JapaneseTokenizer()
-        >>> tokens = tokenizer.tokenize_text("今日は良い天気ですね。")
-        >>> for token in tokens:
-        ...     print(f"{token.surface} -> {token.dictionary_form}")
+    Examples:
+        Basic usage with default MEDIUM mode:
+            >>> tokenizer = JapaneseTokenizer()
+            >>> tokens = tokenizer.tokenize_text("今日は良い天気ですね。")
+            >>> for token in tokens:
+            ...     print(f"{token.surface} -> {token.dictionary_form}")
+            今日 -> 今日
+            は -> は
+            良い -> 良い
+            天気 -> 天気
+            です -> です
+            ね -> ね
+            。 -> 。
+
+        Using SHORT mode for finest granularity:
+            >>> tokenizer = JapaneseTokenizer(mode=TokenizationMode.SHORT)
+            >>> tokens = tokenizer.tokenize_text("東京都に行きました。")
+            >>> [t.surface for t in tokens]
+            ['東京', '都', 'に', '行き', 'まし', 'た', '。']
+
+        Using LONG mode for coarsest granularity:
+            >>> tokenizer = JapaneseTokenizer(mode=TokenizationMode.LONG)
+            >>> tokens = tokenizer.tokenize_text("東京都に行きました。")
+            >>> [t.surface for t in tokens]
+            ['東京都', 'に', '行きました', '。']
+
+        Processing a file:
+            >>> tokenizer = JapaneseTokenizer()
+            >>> tokens = tokenizer.tokenize_file("japanese_text.txt")
+            >>> print(f"Extracted {len(tokens)} tokens")
+
+        Extracting vocabulary with dictionary forms:
+            >>> tokenizer = JapaneseTokenizer(mode=TokenizationMode.MEDIUM)
+            >>> tokens = tokenizer.tokenize_text("食べました")
+            >>> vocab = {t.dictionary_form for t in tokens if t.part_of_speech == "動詞"}
+            >>> print(vocab)
+            {'食べる'}
     """
 
     def __init__(
