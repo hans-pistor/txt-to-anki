@@ -363,51 +363,49 @@ class TestTokenizationModes:
 
     def test_mode_short_produces_most_tokens(self) -> None:
         """Test that SHORT mode produces the most tokens (finest granularity)."""
-        text = "東京都に行きました。"
+        text = "国立国会図書館で調べ物をしました。"
 
         tokenizer_short = JapaneseTokenizer(mode=TokenizationMode.SHORT)
         tokens_short = tokenizer_short.tokenize_text(text)
 
-        # SHORT mode should produce multiple tokens
-        assert len(tokens_short) > 0
-
-        # Verify we get fine-grained tokens
+        # SHORT mode should split compound words most aggressively
         surfaces = [t.surface for t in tokens_short]
-        # In SHORT mode, "東京都" might be split into "東京" and "都"
-        assert len(surfaces) >= 4  # At least: 東京/都/に/行き/まし/た/。
+
+        # Verify exact token count and surfaces
+        assert len(tokens_short) == 11
+        assert surfaces == ["国立", "国会", "図書", "館", "で", "調べ物", "を", "し", "まし", "た", "。"]
 
     def test_mode_long_produces_fewest_tokens(self) -> None:
         """Test that LONG mode produces the fewest tokens (coarsest granularity)."""
-        text = "東京都に行きました。"
+        text = "国立国会図書館で調べ物をしました。"
 
         tokenizer_long = JapaneseTokenizer(mode=TokenizationMode.LONG)
         tokens_long = tokenizer_long.tokenize_text(text)
 
-        # LONG mode should produce fewer, longer tokens
-        assert len(tokens_long) > 0
-
-        # Verify we get coarse-grained tokens
+        # LONG mode should keep compound words together
         surfaces = [t.surface for t in tokens_long]
-        # In LONG mode, compound words stay together
-        assert len(surfaces) <= 6  # Fewer tokens than SHORT mode
+
+        # Verify exact token count and surfaces
+        assert len(tokens_long) == 9
+        assert surfaces == ["国立", "国会図書館", "で", "調べ物", "を", "し", "まし", "た", "。"]
 
     def test_mode_medium_is_balanced(self) -> None:
         """Test that MEDIUM mode produces balanced tokenization."""
-        text = "東京都に行きました。"
+        text = "国立国会図書館で調べ物をしました。"
 
         tokenizer_medium = JapaneseTokenizer(mode=TokenizationMode.MEDIUM)
         tokens_medium = tokenizer_medium.tokenize_text(text)
 
-        # MEDIUM mode should be balanced
-        assert len(tokens_medium) > 0
-
-        # Should be between SHORT and LONG
+        # MEDIUM mode should be between SHORT and LONG
         surfaces = [t.surface for t in tokens_medium]
-        assert 4 <= len(surfaces) <= 6
+
+        # Verify exact token count and surfaces
+        assert len(tokens_medium) == 10
+        assert surfaces == ["国立", "国会", "図書館", "で", "調べ物", "を", "し", "まし", "た", "。"]
 
     def test_different_modes_produce_different_granularities(self) -> None:
         """Test that different modes produce different token counts for the same text."""
-        text = "国際連合本部ビルに行きました。"
+        text = "国立国会図書館で調べ物をしました。"
 
         tokenizer_short = JapaneseTokenizer(mode=TokenizationMode.SHORT)
         tokenizer_medium = JapaneseTokenizer(mode=TokenizationMode.MEDIUM)
@@ -417,16 +415,13 @@ class TestTokenizationModes:
         tokens_medium = tokenizer_medium.tokenize_text(text)
         tokens_long = tokenizer_long.tokenize_text(text)
 
-        # SHORT should produce most tokens (finest granularity)
-        # LONG should produce fewest tokens (coarsest granularity)
-        # MEDIUM should be in between
-        assert len(tokens_short) >= len(tokens_medium)
-        assert len(tokens_medium) >= len(tokens_long)
+        # Verify all three modes produce different token counts
+        assert len(tokens_short) == 11  # Most tokens (finest granularity)
+        assert len(tokens_medium) == 10  # Medium tokens
+        assert len(tokens_long) == 9  # Fewest tokens (coarsest granularity)
 
-        # All modes should produce at least some tokens
-        assert len(tokens_short) > 0
-        assert len(tokens_medium) > 0
-        assert len(tokens_long) > 0
+        # Verify the relationship: SHORT > MEDIUM > LONG
+        assert len(tokens_short) > len(tokens_medium) > len(tokens_long)
 
     def test_mode_affects_compound_word_splitting(self) -> None:
         """Test that modes handle compound words differently."""

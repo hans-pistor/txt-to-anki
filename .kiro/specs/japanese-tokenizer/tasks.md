@@ -24,7 +24,7 @@
   - Test with Japanese text files and verify error handling for invalid files
   - _Requirements: 1.1, 3.1, 3.2, 3.3_
 
-- [ ] 4. Add tokenization mode configuration
+- [x] 4. Add tokenization mode configuration
   - Define TokenizationMode enum for Sudachi modes (A, B, C)
   - Allow mode configuration in JapaneseTokenizer constructor
   - Test different modes with same text to verify different granularities
