@@ -6,7 +6,7 @@ version = "0.7.16"
 description = "A light, configurable Sphinx theme"
 optional = false
 python-versions = ">=3.9"
-groups = ["dev"]
+groups = ["dev", "docs"]
 files = [
     {file = "alabaster-0.7.16-py3-none-any.whl", hash = "sha256:b46733c07dce03ae4e150330b975c75737fa60f0a7c591b6c8bf4928a28e2c92"},
     {file = "alabaster-0.7.16.tar.gz", hash = "sha256:75a8b99c28a5dad50dd7f8ccdd447a121ddb3892da9e53d1ca5cca3106d58d65"},
@@ -18,7 +18,7 @@ version = "2.17.0"
 description = "Internationalization utilities"
 optional = false
 python-versions = ">=3.8"
-groups = ["dev"]
+groups = ["dev", "docs"]
 files = [
     {file = "babel-2.17.0-py3-none-any.whl", hash = "sha256:4d0b53093fdfb4b21c92b5213dba5a1b23885afa8383709427046b21c366e5f2"},
     {file = "babel-2.17.0.tar.gz", hash = "sha256:0c54cffb19f690cdcc52a3b50bcbf71e07a808d1c80d549f2459b9d2cf0afb9d"},
@@ -80,7 +80,7 @@ version = "2025.10.5"
 description = "Python package for providing Mozilla's CA Bundle."
 optional = false
 python-versions = ">=3.7"
-groups = ["dev"]
+groups = ["dev", "docs"]
 files = [
     {file = "certifi-2025.10.5-py3-none-any.whl", hash = "sha256:0f212c2744a9bb6de0c56639a6f68afe01ecd92d91f14ae897c4fe7bbeeef0de"},
     {file = "certifi-2025.10.5.tar.gz", hash = "sha256:47c09d31ccf2acf0be3f701ea53595ee7e0b8fa08801c6624be771df09ae7b43"},
@@ -92,7 +92,7 @@ version = "3.4.4"
 description = "The Real First Universal Charset Detector. Open, modern and actively maintained alternative to Chardet."
 optional = false
 python-versions = ">=3.7"
-groups = ["dev"]
+groups = ["dev", "docs"]
 files = [
     {file = "charset_normalizer-3.4.4-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:e824f1492727fa856dd6eda4f7cee25f8518a12f3c4a56a74e8095695089cf6d"},
     {file = "charset_normalizer-3.4.4-cp310-cp310-manylinux2014_aarch64.manylinux_2_17_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:4bd5d4137d500351a30687c2d3971758aac9a19208fc110ccb9d7188fbe709e8"},
@@ -230,12 +230,12 @@ version = "0.4.6"
 description = "Cross-platform colored terminal text."
 optional = false
 python-versions = "!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*,!=3.5.*,!=3.6.*,>=2.7"
-groups = ["main", "dev"]
+groups = ["main", "dev", "docs"]
 files = [
     {file = "colorama-0.4.6-py2.py3-none-any.whl", hash = "sha256:4f1d9991f5acc0ca119f9d443620b77f9d6b33703e51011c16baf57afb285fc6"},
     {file = "colorama-0.4.6.tar.gz", hash = "sha256:08695f5cb7ed6e0531a20572697297273c47b8cae5a63ffc6d6ed5c201be6e44"},
 ]
-markers = {main = "platform_system == \"Windows\"", dev = "platform_system == \"Windows\" or sys_platform == \"win32\""}
+markers = {main = "platform_system == \"Windows\"", dev = "platform_system == \"Windows\" or sys_platform == \"win32\"", docs = "sys_platform == \"win32\""}
 
 [[package]]
 name = "coverage"
@@ -351,7 +351,7 @@ version = "0.20.1"
 description = "Docutils -- Python Documentation Utilities"
 optional = false
 python-versions = ">=3.7"
-groups = ["dev"]
+groups = ["dev", "docs"]
 files = [
     {file = "docutils-0.20.1-py3-none-any.whl", hash = "sha256:96f387a2c5562db4476f09f13bbab2192e764cac08ebbf3a34a95d9b1e4a59d6"},
     {file = "docutils-0.20.1.tar.gz", hash = "sha256:f08a4e276c3a1583a86dce3e34aba3fe04d02bba2dd51ed16106244e8a923e3b"},
@@ -382,7 +382,7 @@ version = "3.11"
 description = "Internationalized Domain Names in Applications (IDNA)"
 optional = false
 python-versions = ">=3.8"
-groups = ["dev"]
+groups = ["dev", "docs"]
 files = [
     {file = "idna-3.11-py3-none-any.whl", hash = "sha256:771a87f49d9defaf64091e6e6fe9c18d4833f140bd19464795bc32d966ca37ea"},
     {file = "idna-3.11.tar.gz", hash = "sha256:795dafcc9c04ed0c1fb032c2aa73654d8e8c5023a7df64a53f39190ada629902"},
@@ -397,7 +397,7 @@ version = "1.4.1"
 description = "Getting image size from png/jpeg/jpeg2000/gif file"
 optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
-groups = ["dev"]
+groups = ["dev", "docs"]
 files = [
     {file = "imagesize-1.4.1-py2.py3-none-any.whl", hash = "sha256:0d8d18d08f840c19d0ee7ca1fd82490fdc3729b7ac93f49870406ddde8ef8d8b"},
     {file = "imagesize-1.4.1.tar.gz", hash = "sha256:69150444affb9cb0d5cc5a92b3676f0b2fb7cd9ae39e947a5e11a36b4497cd4a"},
@@ -421,7 +421,7 @@ version = "3.1.6"
 description = "A very fast and expressive template engine."
 optional = false
 python-versions = ">=3.7"
-groups = ["dev"]
+groups = ["dev", "docs"]
 files = [
     {file = "jinja2-3.1.6-py3-none-any.whl", hash = "sha256:85ece4451f492d0c13c5dd7c13a64681a86afae63a5f347908daf103ce6d2f67"},
     {file = "jinja2-3.1.6.tar.gz", hash = "sha256:0137fb05990d35f1275a587e9aee6d56da821fc83491a0fb838183be43f66d6d"},
@@ -463,7 +463,7 @@ version = "3.0.3"
 description = "Safely add untrusted strings to HTML/XML markup."
 optional = false
 python-versions = ">=3.9"
-groups = ["dev"]
+groups = ["dev", "docs"]
 files = [
     {file = "markupsafe-3.0.3-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:2f981d352f04553a7171b8e44369f2af4055f888dfb147d55e42d29e29e74559"},
     {file = "markupsafe-3.0.3-cp310-cp310-macosx_11_0_arm64.whl", hash = "sha256:e1c1493fb6e50ab01d20a22826e57520f1284df32f2d8601fdd90b6304601419"},
@@ -647,7 +647,7 @@ version = "25.0"
 description = "Core utilities for Python packages"
 optional = false
 python-versions = ">=3.8"
-groups = ["dev"]
+groups = ["dev", "docs"]
 files = [
     {file = "packaging-25.0-py3-none-any.whl", hash = "sha256:29572ef2b1f17581046b3a2227d5c611fb25ec70ca1ba8554b24b0e69331a484"},
     {file = "packaging-25.0.tar.gz", hash = "sha256:d443872c98d677bf60f6a1f2f8c1cb748e8fe762d2bf9d3148b5599295b0fc4f"},
@@ -704,7 +704,7 @@ version = "2.19.2"
 description = "Pygments is a syntax highlighting package written in Python."
 optional = false
 python-versions = ">=3.8"
-groups = ["main", "dev"]
+groups = ["main", "dev", "docs"]
 files = [
     {file = "pygments-2.19.2-py3-none-any.whl", hash = "sha256:86540386c03d588bb81d44bc3928634ff26449851e99741617ecb9037ee5ec0b"},
     {file = "pygments-2.19.2.tar.gz", hash = "sha256:636cb2477cec7f8952536970bc533bc43743542f70392ae026374600add5b887"},
@@ -761,7 +761,7 @@ version = "2.32.5"
 description = "Python HTTP for Humans."
 optional = false
 python-versions = ">=3.9"
-groups = ["dev"]
+groups = ["dev", "docs"]
 files = [
     {file = "requests-2.32.5-py3-none-any.whl", hash = "sha256:2462f94637a34fd532264295e186976db0f5d453d1cdd31473c85a6a161affb6"},
     {file = "requests-2.32.5.tar.gz", hash = "sha256:dbba0bac56e100853db0ea71b82b4dfd5fe2bf6d3754a8893c3af500cec7d7cf"},
@@ -841,7 +841,7 @@ version = "3.0.1"
 description = "This package provides 32 stemmers for 30 languages generated from Snowball algorithms."
 optional = false
 python-versions = "!=3.0.*,!=3.1.*,!=3.2.*"
-groups = ["dev"]
+groups = ["dev", "docs"]
 files = [
     {file = "snowballstemmer-3.0.1-py3-none-any.whl", hash = "sha256:6cd7b3897da8d6c9ffb968a6781fa6532dce9c3618a4b127d920dab764a19064"},
     {file = "snowballstemmer-3.0.1.tar.gz", hash = "sha256:6d5eeeec8e9f84d4d56b847692bacf79bc2c8e90c7f80ca4444ff8b6f2e52895"},
@@ -853,7 +853,7 @@ version = "7.4.7"
 description = "Python documentation generator"
 optional = false
 python-versions = ">=3.9"
-groups = ["dev"]
+groups = ["dev", "docs"]
 files = [
     {file = "sphinx-7.4.7-py3-none-any.whl", hash = "sha256:c2419e2135d11f1951cd994d6eb18a1835bd8fdd8429f9ca375dc1f3281bd239"},
     {file = "sphinx-7.4.7.tar.gz", hash = "sha256:242f92a7ea7e6c5b406fdc2615413890ba9f699114a9c09192d7dfead2ee9cfe"},
@@ -889,7 +889,7 @@ version = "1.25.3"
 description = "Type hints (PEP 484) support for the Sphinx autodoc extension"
 optional = false
 python-versions = ">=3.8"
-groups = ["dev"]
+groups = ["dev", "docs"]
 files = [
     {file = "sphinx_autodoc_typehints-1.25.3-py3-none-any.whl", hash = "sha256:d3da7fa9a9761eff6ff09f8b1956ae3090a2d4f4ad54aebcade8e458d6340835"},
     {file = "sphinx_autodoc_typehints-1.25.3.tar.gz", hash = "sha256:70db10b391acf4e772019765991d2de0ff30ec0899b9ba137706dc0b3c4835e0"},
@@ -909,7 +909,7 @@ version = "2.0.0"
 description = "Read the Docs theme for Sphinx"
 optional = false
 python-versions = ">=3.6"
-groups = ["dev"]
+groups = ["dev", "docs"]
 files = [
     {file = "sphinx_rtd_theme-2.0.0-py2.py3-none-any.whl", hash = "sha256:ec93d0856dc280cf3aee9a4c9807c60e027c7f7b461b77aeffed682e68f0e586"},
     {file = "sphinx_rtd_theme-2.0.0.tar.gz", hash = "sha256:bd5d7b80622406762073a04ef8fadc5f9151261563d47027de09910ce03afe6b"},
@@ -929,7 +929,7 @@ version = "2.0.0"
 description = "sphinxcontrib-applehelp is a Sphinx extension which outputs Apple help books"
 optional = false
 python-versions = ">=3.9"
-groups = ["dev"]
+groups = ["dev", "docs"]
 files = [
     {file = "sphinxcontrib_applehelp-2.0.0-py3-none-any.whl", hash = "sha256:4cd3f0ec4ac5dd9c17ec65e9ab272c9b867ea77425228e68ecf08d6b28ddbdb5"},
     {file = "sphinxcontrib_applehelp-2.0.0.tar.gz", hash = "sha256:2f29ef331735ce958efa4734873f084941970894c6090408b079c61b2e1c06d1"},
@@ -946,7 +946,7 @@ version = "2.0.0"
 description = "sphinxcontrib-devhelp is a sphinx extension which outputs Devhelp documents"
 optional = false
 python-versions = ">=3.9"
-groups = ["dev"]
+groups = ["dev", "docs"]
 files = [
     {file = "sphinxcontrib_devhelp-2.0.0-py3-none-any.whl", hash = "sha256:aefb8b83854e4b0998877524d1029fd3e6879210422ee3780459e28a1f03a8a2"},
     {file = "sphinxcontrib_devhelp-2.0.0.tar.gz", hash = "sha256:411f5d96d445d1d73bb5d52133377b4248ec79db5c793ce7dbe59e074b4dd1ad"},
@@ -963,7 +963,7 @@ version = "2.1.0"
 description = "sphinxcontrib-htmlhelp is a sphinx extension which renders HTML help files"
 optional = false
 python-versions = ">=3.9"
-groups = ["dev"]
+groups = ["dev", "docs"]
 files = [
     {file = "sphinxcontrib_htmlhelp-2.1.0-py3-none-any.whl", hash = "sha256:166759820b47002d22914d64a075ce08f4c46818e17cfc9470a9786b759b19f8"},
     {file = "sphinxcontrib_htmlhelp-2.1.0.tar.gz", hash = "sha256:c9e2916ace8aad64cc13a0d233ee22317f2b9025b9cf3295249fa985cc7082e9"},
@@ -980,7 +980,7 @@ version = "4.1"
 description = "Extension to include jQuery on newer Sphinx releases"
 optional = false
 python-versions = ">=2.7"
-groups = ["dev"]
+groups = ["dev", "docs"]
 files = [
     {file = "sphinxcontrib-jquery-4.1.tar.gz", hash = "sha256:1620739f04e36a2c779f1a131a2dfd49b2fd07351bf1968ced074365933abc7a"},
     {file = "sphinxcontrib_jquery-4.1-py2.py3-none-any.whl", hash = "sha256:f936030d7d0147dd026a4f2b5a57343d233f1fc7b363f68b3d4f1cb0993878ae"},
@@ -995,7 +995,7 @@ version = "1.0.1"
 description = "A sphinx extension which renders display math in HTML via JavaScript"
 optional = false
 python-versions = ">=3.5"
-groups = ["dev"]
+groups = ["dev", "docs"]
 files = [
     {file = "sphinxcontrib-jsmath-1.0.1.tar.gz", hash = "sha256:a9925e4a4587247ed2191a22df5f6970656cb8ca2bd6284309578f2153e0c4b8"},
     {file = "sphinxcontrib_jsmath-1.0.1-py2.py3-none-any.whl", hash = "sha256:2ec2eaebfb78f3f2078e73666b1415417a116cc848b72e5172e596c871103178"},
@@ -1010,7 +1010,7 @@ version = "2.0.0"
 description = "sphinxcontrib-qthelp is a sphinx extension which outputs QtHelp documents"
 optional = false
 python-versions = ">=3.9"
-groups = ["dev"]
+groups = ["dev", "docs"]
 files = [
     {file = "sphinxcontrib_qthelp-2.0.0-py3-none-any.whl", hash = "sha256:b18a828cdba941ccd6ee8445dbe72ffa3ef8cbe7505d8cd1fa0d42d3f2d5f3eb"},
     {file = "sphinxcontrib_qthelp-2.0.0.tar.gz", hash = "sha256:4fe7d0ac8fc171045be623aba3e2a8f613f8682731f9153bb2e40ece16b9bbab"},
@@ -1027,7 +1027,7 @@ version = "2.0.0"
 description = "sphinxcontrib-serializinghtml is a sphinx extension which outputs \"serialized\" HTML files (json and pickle)"
 optional = false
 python-versions = ">=3.9"
-groups = ["dev"]
+groups = ["dev", "docs"]
 files = [
     {file = "sphinxcontrib_serializinghtml-2.0.0-py3-none-any.whl", hash = "sha256:6e2cb0eef194e10c27ec0023bfeb25badbbb5868244cf5bc5bdc04e4464bf331"},
     {file = "sphinxcontrib_serializinghtml-2.0.0.tar.gz", hash = "sha256:e9d912827f872c029017a53f0ef2180b327c3f7fd23c87229f7a8e8b70031d4d"},
@@ -1039,13 +1039,57 @@ standalone = ["Sphinx (>=5)"]
 test = ["pytest"]
 
 [[package]]
+name = "sudachidict-full"
+version = "20240716"
+description = "Sudachi Dictionary for SudachiPy - Full Edition"
+optional = false
+python-versions = "*"
+groups = ["main"]
+files = [
+    {file = "SudachiDict-full-20240716.tar.gz", hash = "sha256:06097787356e8cf30c9d14777f87d75d43beada4c66b26b40ed9b6b61d5a260a"},
+]
+
+[package.dependencies]
+SudachiPy = ">=0.5,<0.7"
+
+[[package]]
+name = "sudachipy"
+version = "0.6.10"
+description = "Python version of Sudachi, the Japanese Morphological Analyzer"
+optional = false
+python-versions = "*"
+groups = ["main"]
+files = [
+    {file = "SudachiPy-0.6.10-cp310-cp310-macosx_10_12_universal2.whl", hash = "sha256:418899c5794ec8fd86341d690bdd23bb85f35890540520624a001c751bcfdff0"},
+    {file = "SudachiPy-0.6.10-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:99aeaf4a7bbf4c473929f5a9812226123dac1457fb0d549c5e95192eda3f0859"},
+    {file = "SudachiPy-0.6.10-cp310-cp310-win_amd64.whl", hash = "sha256:efd9c7584ed6dadf9f7d2f4ea616d06207b0d8a805861f9762072733b611b0db"},
+    {file = "SudachiPy-0.6.10-cp311-cp311-macosx_10_12_universal2.whl", hash = "sha256:e947d907542c8086b7e6d18669f45599b3964eec4e954ad7dd85e4acdaa94793"},
+    {file = "SudachiPy-0.6.10-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:5e1c1d8c579cc3af591a6511bffba9f88662eedf5ba32868ca8e3ba3c1051d60"},
+    {file = "SudachiPy-0.6.10-cp311-cp311-win_amd64.whl", hash = "sha256:8af8b3c91a9aaf0f300901967f85805d73e83297da6c56db50002dde3a4514fe"},
+    {file = "SudachiPy-0.6.10-cp312-cp312-macosx_10_13_universal2.whl", hash = "sha256:efb43fb3b46696ca4510b7dd4c3e490de8dbb7950d7172140dc27a4e69cd5811"},
+    {file = "SudachiPy-0.6.10-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:0f8fd0ce37961401c9bdd78c126b2119a0a1669d376feb0b2427c35894ef1428"},
+    {file = "SudachiPy-0.6.10-cp312-cp312-win_amd64.whl", hash = "sha256:4a79b92b0776613481481c1ed0d2e92994b233ed5d29aa365789a1ba521de0a4"},
+    {file = "SudachiPy-0.6.10-cp313-cp313-macosx_10_13_universal2.whl", hash = "sha256:cc97b5d48f46f9989d97e105f7dd6419da2174888fcc42e55c0e4cd46597ed3b"},
+    {file = "SudachiPy-0.6.10-cp313-cp313-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:9794b73fffd8099d93e07882ba87eee5edbed0e4f1b94761db8f22c8e5da9904"},
+    {file = "SudachiPy-0.6.10-cp313-cp313-win_amd64.whl", hash = "sha256:0fc5b60920a439c534688237e2651e15e4eaadc166a63182d6e24ac7ef3e4779"},
+    {file = "SudachiPy-0.6.10-cp313-cp313t-macosx_10_13_universal2.whl", hash = "sha256:7455e5cbb4c2cf9294c82345c9d46b344774b4eb23eca917f305ed716d8d5168"},
+    {file = "SudachiPy-0.6.10-cp313-cp313t-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:38d0de9e840ac8d199e714a40506792ea5237d0db0c966da16d51fbc74a508d6"},
+    {file = "SudachiPy-0.6.10-cp39-cp39-macosx_10_12_universal2.whl", hash = "sha256:de4fc5c155479f873f5f7cfb04989ffb41e6a187c566c59efdb7946fc87498fe"},
+    {file = "SudachiPy-0.6.10-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:a5e2664dc436798d967c0fd92ae5186a175822eb38d294e2da7dad4417b8625c"},
+    {file = "SudachiPy-0.6.10-cp39-cp39-win_amd64.whl", hash = "sha256:af941d5393b8389acbaf9ec5f50e7b2ef48cb0a875594d9d4347e78e86cf842a"},
+    {file = "sudachipy-0.6.10.tar.gz", hash = "sha256:b8910a4610de98b2c3cb6dc3362fea93e3ba5059f1eb445a68baa9585278f31b"},
+]
+
+[package.extras]
+tests = ["sudachidict_core", "tokenizers"]
+
+[[package]]
 name = "tomli"
 version = "2.3.0"
 description = "A lil' TOML parser"
 optional = false
 python-versions = ">=3.8"
-groups = ["dev"]
-markers = "python_full_version <= \"3.11.0a6\""
+groups = ["dev", "docs"]
 files = [
     {file = "tomli-2.3.0-cp311-cp311-macosx_10_9_x86_64.whl", hash = "sha256:88bd15eb972f3664f5ed4b57c1634a97153b4bac4479dcb6a495f41921eb7f45"},
     {file = "tomli-2.3.0-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:883b1c0d6398a6a9d29b508c331fa56adbcdff647f6ace4dfca0f50e90dfd0ba"},
@@ -1090,6 +1134,7 @@ files = [
     {file = "tomli-2.3.0-py3-none-any.whl", hash = "sha256:e95b1af3c5b07d9e643909b5abbec77cd9f1217e6d0bca72b0234736b9fb1f1b"},
     {file = "tomli-2.3.0.tar.gz", hash = "sha256:64be704a875d2a59753d80ee8a533c3fe183e3f06807ff7dc2232938ccb01549"},
 ]
+markers = {dev = "python_full_version <= \"3.11.0a6\"", docs = "python_version == \"3.10\""}
 
 [[package]]
 name = "typer"
@@ -1127,7 +1172,7 @@ version = "2.5.0"
 description = "HTTP library with thread-safe connection pooling, file post, and more."
 optional = false
 python-versions = ">=3.9"
-groups = ["dev"]
+groups = ["dev", "docs"]
 files = [
     {file = "urllib3-2.5.0-py3-none-any.whl", hash = "sha256:e6b01673c0fa6a13e374b50871808eb3bf7046c4b125b216f6bf1cc604cff0dc"},
     {file = "urllib3-2.5.0.tar.gz", hash = "sha256:3fc47733c7e419d4bc3f6b3dc2b4f890bb743906a30d56ba4a5bfa4bbff92760"},
@@ -1141,5 +1186,5 @@ zstd = ["zstandard (>=0.18.0)"]
 
 [metadata]
 lock-version = "2.1"
-python-versions = "^3.10"
-content-hash = "0c73f9f7c6503870c42bc8ee7f8083df0367b0539c94f6e75822dbee8aebc2f5"
+python-versions = ">=3.10,<3.14"
+content-hash = "edd8b2d121603eb505fc1d30e5289b354dd110fb4945abb27c0b2d57438aa324"

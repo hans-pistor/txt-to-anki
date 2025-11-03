@@ -11,8 +11,10 @@ readme = "README.md"
 packages = [{include = "txt_to_anki", from = "src"}]
 
 [tool.poetry.dependencies]
-python = "^3.10"
+python = ">=3.10,<3.14"
 typer = "^0.12.0"
+sudachipy = "^0.6.8"
+sudachidict-full = "^20240716"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.4.0"
