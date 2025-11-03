@@ -2,8 +2,17 @@
 
 from __future__ import annotations
 
+import tempfile
+from pathlib import Path
 
-from txt_to_anki.tokenizer import JapaneseTokenizer, Token, TokenizationMode
+import pytest
+
+from txt_to_anki.tokenizer import (
+    FileProcessingError,
+    JapaneseTokenizer,
+    Token,
+    TokenizationMode,
+)
 
 
 class TestToken:
@@ -194,3 +203,156 @@ class TestJapaneseTokenizer:
         assert "私" in surfaces
         assert "コーヒー" in surfaces
         assert "飲み" in surfaces
+
+
+class TestFileProcessing:
+    """Tests for file processing functionality."""
+
+    def test_tokenize_file_with_path_object(self) -> None:
+        """Test tokenizing a file using Path object."""
+        # Create a temporary file with Japanese text
+        with tempfile.NamedTemporaryFile(
+            mode="w", encoding="utf-8", suffix=".txt", delete=False
+        ) as f:
+            f.write("今日は良い天気です。")
+            temp_path = Path(f.name)
+
+        try:
+            tokenizer = JapaneseTokenizer()
+            tokens = tokenizer.tokenize_file(temp_path)
+
+            assert len(tokens) > 0
+            assert all(isinstance(token, Token) for token in tokens)
+        finally:
+            temp_path.unlink()
+
+    def test_tokenize_file_with_string_path(self) -> None:
+        """Test tokenizing a file using string path."""
+        # Create a temporary file with Japanese text
+        with tempfile.NamedTemporaryFile(
+            mode="w", encoding="utf-8", suffix=".txt", delete=False
+        ) as f:
+            f.write("私はコーヒーを飲みます。")
+            temp_path = f.name
+
+        try:
+            tokenizer = JapaneseTokenizer()
+            tokens = tokenizer.tokenize_file(temp_path)
+
+            assert len(tokens) > 0
+            surfaces = [t.surface for t in tokens]
+            assert "私" in surfaces
+        finally:
+            Path(temp_path).unlink()
+
+    def test_tokenize_file_not_found(self) -> None:
+        """Test error handling for non-existent file."""
+        tokenizer = JapaneseTokenizer()
+
+        with pytest.raises(FileProcessingError) as exc_info:
+            tokenizer.tokenize_file("nonexistent_file.txt")
+
+        assert "File not found" in str(exc_info.value)
+        assert "nonexistent_file.txt" in str(exc_info.value)
+
+    def test_tokenize_file_is_directory(self) -> None:
+        """Test error handling when path is a directory."""
+        tokenizer = JapaneseTokenizer()
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            with pytest.raises(FileProcessingError) as exc_info:
+                tokenizer.tokenize_file(temp_dir)
+
+            assert "not a file" in str(exc_info.value).lower()
+
+    def test_tokenize_file_empty(self) -> None:
+        """Test error handling for empty file."""
+        with tempfile.NamedTemporaryFile(
+            mode="w", encoding="utf-8", suffix=".txt", delete=False
+        ) as f:
+            # Write nothing
+            temp_path = Path(f.name)
+
+        try:
+            tokenizer = JapaneseTokenizer()
+
+            with pytest.raises(FileProcessingError) as exc_info:
+                tokenizer.tokenize_file(temp_path)
+
+            assert "empty" in str(exc_info.value).lower()
+        finally:
+            temp_path.unlink()
+
+    def test_tokenize_file_whitespace_only(self) -> None:
+        """Test error handling for file with only whitespace."""
+        with tempfile.NamedTemporaryFile(
+            mode="w", encoding="utf-8", suffix=".txt", delete=False
+        ) as f:
+            f.write("   \n\t  \n  ")
+            temp_path = Path(f.name)
+
+        try:
+            tokenizer = JapaneseTokenizer()
+
+            with pytest.raises(FileProcessingError) as exc_info:
+                tokenizer.tokenize_file(temp_path)
+
+            assert "empty" in str(exc_info.value).lower()
+        finally:
+            temp_path.unlink()
+
+    def test_tokenize_file_invalid_encoding(self) -> None:
+        """Test error handling for non-UTF-8 encoded file."""
+        # Create a file with non-UTF-8 encoding
+        with tempfile.NamedTemporaryFile(
+            mode="w", encoding="shift_jis", suffix=".txt", delete=False
+        ) as f:
+            f.write("今日は良い天気です。")
+            temp_path = Path(f.name)
+
+        try:
+            tokenizer = JapaneseTokenizer()
+
+            with pytest.raises(FileProcessingError) as exc_info:
+                tokenizer.tokenize_file(temp_path)
+
+            error_msg = str(exc_info.value).lower()
+            assert "encoding" in error_msg or "utf-8" in error_msg
+        finally:
+            temp_path.unlink()
+
+    def test_tokenize_file_multiline_text(self) -> None:
+        """Test tokenizing a file with multiple lines."""
+        with tempfile.NamedTemporaryFile(
+            mode="w", encoding="utf-8", suffix=".txt", delete=False
+        ) as f:
+            f.write("今日は良い天気です。\n私はコーヒーを飲みます。\n元気ですか？")
+            temp_path = Path(f.name)
+
+        try:
+            tokenizer = JapaneseTokenizer()
+            tokens = tokenizer.tokenize_file(temp_path)
+
+            assert len(tokens) > 0
+            # Should have tokens from all lines
+            surfaces = [t.surface for t in tokens]
+            assert "今日" in surfaces
+            assert "私" in surfaces
+            assert "元気" in surfaces
+        finally:
+            temp_path.unlink()
+
+    def test_tokenize_real_file(self) -> None:
+        """Test tokenizing the sample Japanese text file."""
+        sample_file = Path("resources/お隣遊び - ぺんたごん.txt")
+
+        if sample_file.exists():
+            tokenizer = JapaneseTokenizer()
+            tokens = tokenizer.tokenize_file(sample_file)
+
+            assert len(tokens) > 0
+            assert all(isinstance(token, Token) for token in tokens)
+
+            # Verify we get meaningful tokens
+            surfaces = [t.surface for t in tokens]
+            assert len(surfaces) > 10  # Should have many tokens
