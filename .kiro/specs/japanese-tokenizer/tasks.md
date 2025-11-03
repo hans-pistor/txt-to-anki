@@ -39,15 +39,7 @@
   - Test error scenarios to verify appropriate error messages and handling
   - _Requirements: 3.1, 3.2, 3.3, 3.4_
 
-- [ ] 6. Finalize public API and documentation
-  - Add comprehensive type hints to all functions and methods
-  - Create clean module exports in __init__.py
-  - Add docstrings following Google style for public methods
-  - Document usage examples and integration patterns
-  - Verify type checking passes and API works as documented in examples
-  - _Requirements: 4.2, 4.3, 4.5_
-
-- [ ]* 7. Add comprehensive test suite
+- [ ]* 6. Add comprehensive test suite
   - Write unit tests for all tokenization functionality
   - Test error handling scenarios and edge cases
   - Add integration tests with sample Japanese text files
@@ -57,26 +49,26 @@
 
 ## Stretch Goals (Optional - Implement After Core Functionality)
 
-- [ ]* 8. Implement TokenFilter protocol
+- [ ]* 7. Implement TokenFilter protocol
   - Define TokenFilter protocol interface
   - Create base filter infrastructure
   - Add filter application methods to JapaneseTokenizer
   - _Requirements: 2.1, 2.2_
 
-- [ ]* 9. Create basic filter implementations
+- [ ]* 8. Create basic filter implementations
   - Implement ParticleFilter for removing Japanese particles
   - Create LengthFilter for minimum character length filtering
   - Add POSFilter for part-of-speech based filtering
   - Implement DuplicationFilter using dictionary forms
   - _Requirements: 2.1, 2.2, 2.3, 2.4_
 
-- [ ]* 10. Add filter composition and configuration
+- [ ]* 9. Add filter composition and configuration
   - Enable chaining multiple filters together
   - Add configuration options for common filter combinations
   - Create filter usage examples and documentation
   - _Requirements: 2.1, 2.2_
 
-- [ ]* 11. Extend testing for filtering system
+- [ ]* 10. Extend testing for filtering system
   - Write unit tests for each filter implementation
   - Test filter composition and chaining
   - Add performance tests for filtered tokenization
