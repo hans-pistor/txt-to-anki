@@ -7,20 +7,24 @@ When implementing tasks from `.kiro/specs/*/tasks.md`, ALWAYS follow this comple
 **Before writing ANY code, complete these steps IN ORDER:**
 
 - [ ] 1. Read the task from tasks.md
-- [ ] 2. Create GitHub issue using `gh issue create`
-- [ ] 3. Note the issue number (e.g., #42)
-- [ ] 4. Create feature branch: `git checkout -b feature/<issue-number>-<description>`
-- [ ] 5. NOW you can start coding
+- [ ] 2. Create temporary issue description file
+- [ ] 3. Create GitHub issue using `gh issue create --body-file <temp-file>`
+- [ ] 4. Note the issue number (e.g., #42)
+- [ ] 5. Create feature branch: `git checkout -b feature/<issue-number>-<description>`
+- [ ] 6. NOW you can start coding
 
-**DO NOT SKIP STEP 2! GitHub issue creation is MANDATORY before any code changes.**
+**DO NOT SKIP STEPS 2-3! GitHub issue creation from file is MANDATORY before any code changes.**
 
 ## 1. Before Starting Implementation
 
 1. **Create GitHub Issue** (MANDATORY FIRST STEP):
    - **DO THIS FIRST** before any code changes
-   - Use the task title and details to create a descriptive issue
-   - Follow the issue template from `github-workflow.md`
-   - Include acceptance criteria from the task
+   - Create a temporary file (e.g., `/tmp/issue-description.md`) with:
+     - Task title and description
+     - Detailed implementation steps from the task
+     - Acceptance criteria from requirements
+     - References to requirement numbers
+   - Use `gh issue create --title "..." --body-file /tmp/issue-description.md` to create the issue
    - Note the issue number (e.g., #42)
    - **STOP and wait for issue creation before proceeding**
 
@@ -82,22 +86,40 @@ Follow Conventional Commits:
 ## Example Complete Workflow
 
 ```bash
-# 1. Create issue (note the number, e.g., #42)
-gh issue create --title "feat(tokenizer): add file processing" --body-file .github/issue-template.md
+# 1. Create issue description file
+cat > /tmp/issue-description.md << 'EOF'
+## Task Description
+Implement file processing capabilities for the Japanese tokenizer.
 
-# 2. Create branch
+## Implementation Steps
+- Extend JapaneseTokenizer with tokenize_file method
+- Implement UTF-8 file reading with encoding validation
+- Create custom exceptions (FileProcessingError, TokenizerInitializationError)
+- Add comprehensive error handling for file operations
+- Test with Japanese text files and verify error handling
+
+## Acceptance Criteria
+- Requirements 1.1, 3.1, 3.2, 3.3 must be satisfied
+- All tests must pass
+- Type checking with mypy must pass
+EOF
+
+# 2. Create issue from file (note the number, e.g., #42)
+gh issue create --title "feat(tokenizer): add file processing capabilities" --body-file /tmp/issue-description.md
+
+# 3. Create branch
 git checkout -b feature/42-file-processing
 
-# 3. Implement feature
+# 4. Implement feature
 # ... make code changes ...
 
-# 4. Run quality checks
+# 5. Run quality checks
 poetry run mypy src/
 poetry run black .
 poetry run ruff check .
 poetry run pytest
 
-# 5. Commit
+# 6. Commit
 git add src/txt_to_anki/tokenizer/japanese_tokenizer.py tests/test_tokenizer.py
 git commit -m "feat(tokenizer): add file processing capabilities
 
@@ -106,7 +128,7 @@ comprehensive error handling, and full test coverage.
 
 Closes #42"
 
-# 6. Push and create PR
+# 7. Push and create PR
 git push origin feature/42-file-processing
 gh pr create --title "feat(tokenizer): add file processing capabilities" --body "Closes #42"
 ```
@@ -114,12 +136,14 @@ gh pr create --title "feat(tokenizer): add file processing capabilities" --body 
 ## Important Notes
 
 - **🚨 CRITICAL: Create the GitHub issue FIRST, before ANY code changes 🚨**
+- **ALWAYS create issue from a temporary file using --body-file flag**
 - **ALWAYS create a feature branch from main**
 - **ALWAYS run mypy before committing** (blocking requirement)
 - **ALWAYS reference the issue in commits and PRs**
 - **NEVER commit directly to main**
 - **NEVER skip quality checks**
 - **NEVER start coding without a GitHub issue number**
+- **NEVER use inline --body text for issue creation, always use --body-file**
 
 This workflow ensures:
 - Traceable changes linked to issues

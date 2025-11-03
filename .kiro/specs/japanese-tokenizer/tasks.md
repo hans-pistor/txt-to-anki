@@ -49,26 +49,21 @@
 
 ## Stretch Goals (Optional - Implement After Core Functionality)
 
-- [ ]* 7. Implement TokenFilter protocol
+- [ ] 7. Implement TokenFilter protocol and basic filter implementations
   - Define TokenFilter protocol interface
   - Create base filter infrastructure
   - Add filter application methods to JapaneseTokenizer
+  - Implement ParticleFilter for removing Japanese particles
+  - Implement PunctuationFilter for removing punctuation characters (「」、。！？―etc.)
   - _Requirements: 2.1, 2.2_
 
-- [ ]* 8. Create basic filter implementations
-  - Implement ParticleFilter for removing Japanese particles
-  - Create LengthFilter for minimum character length filtering
-  - Add POSFilter for part-of-speech based filtering
-  - Implement DuplicationFilter using dictionary forms
-  - _Requirements: 2.1, 2.2, 2.3, 2.4_
-
-- [ ]* 9. Add filter composition and configuration
+- [ ]* 8. Add filter composition and configuration
   - Enable chaining multiple filters together
   - Add configuration options for common filter combinations
   - Create filter usage examples and documentation
   - _Requirements: 2.1, 2.2_
 
-- [ ]* 10. Extend testing for filtering system
+- [ ]* 9. Extend testing for filtering system
   - Write unit tests for each filter implementation
   - Test filter composition and chaining
   - Add performance tests for filtered tokenization
