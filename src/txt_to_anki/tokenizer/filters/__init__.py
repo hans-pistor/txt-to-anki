@@ -7,7 +7,8 @@ and filtering tokens based on various criteria.
 from __future__ import annotations
 
 from txt_to_anki.tokenizer.filters.protocol import TokenFilter
-from txt_to_anki.tokenizer.filters.pos_filters import ParticleFilter, PunctuationFilter
+from txt_to_anki.tokenizer.filters.particle_filter import ParticleFilter
+from txt_to_anki.tokenizer.filters.punctuation_filter import PunctuationFilter
 
 __all__ = [
     "TokenFilter",
