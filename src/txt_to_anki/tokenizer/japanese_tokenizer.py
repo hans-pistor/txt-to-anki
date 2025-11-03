@@ -20,6 +20,12 @@ from txt_to_anki.tokenizer.exceptions import (
 )
 from txt_to_anki.tokenizer.token_models import Token
 
+# Type hint for filter protocol
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from txt_to_anki.tokenizer.filters.protocol import TokenFilter
+
 
 class TokenizationMode(Enum):
     """Tokenization granularity modes for Sudachi.
@@ -156,6 +162,7 @@ class JapaneseTokenizer:
         self.dictionary_type = dictionary_type
         self.require_japanese = require_japanese
         self._tokenizer: SudachiTokenizer | None = None
+        self._filters: list[TokenFilter] = []
         self._initialize_sudachi()
 
     def _initialize_sudachi(self) -> None:
@@ -248,12 +255,81 @@ class JapaneseTokenizer:
             # If we can't read the file, assume it might be binary
             return False
 
-    def tokenize_text(self, text: str, partial_ok: bool = False) -> list[Token]:
+    def add_filter(self, filter_impl: TokenFilter) -> None:
+        """Add a filter to be applied to tokenization results.
+
+        Filters are applied in the order they are added. Each filter receives
+        the output of the previous filter.
+
+        Args:
+            filter_impl: A TokenFilter implementation to add
+
+        Example:
+            >>> from txt_to_anki.tokenizer.filters import ParticleFilter, PunctuationFilter
+            >>> tokenizer = JapaneseTokenizer()
+            >>> tokenizer.add_filter(ParticleFilter())
+            >>> tokenizer.add_filter(PunctuationFilter())
+            >>> tokens = tokenizer.tokenize_text("私は学生です。")
+            >>> # Particles and punctuation will be filtered out
+        """
+        self._filters.append(filter_impl)
+
+    def set_filters(self, filters: list[TokenFilter]) -> None:
+        """Set the complete list of filters, replacing any existing filters.
+
+        Args:
+            filters: List of TokenFilter implementations
+
+        Example:
+            >>> from txt_to_anki.tokenizer.filters import ParticleFilter, PunctuationFilter
+            >>> tokenizer = JapaneseTokenizer()
+            >>> tokenizer.set_filters([ParticleFilter(), PunctuationFilter()])
+        """
+        self._filters = filters.copy()
+
+    def clear_filters(self) -> None:
+        """Remove all filters from the tokenizer.
+
+        Example:
+            >>> tokenizer = JapaneseTokenizer()
+            >>> tokenizer.add_filter(ParticleFilter())
+            >>> tokenizer.clear_filters()
+            >>> # No filters will be applied
+        """
+        self._filters.clear()
+
+    def apply_filters(self, tokens: list[Token]) -> list[Token]:
+        """Apply all configured filters to a list of tokens.
+
+        Filters are applied sequentially in the order they were added.
+        Each filter receives the output of the previous filter.
+
+        Args:
+            tokens: List of tokens to filter
+
+        Returns:
+            Filtered list of tokens
+
+        Example:
+            >>> tokenizer = JapaneseTokenizer()
+            >>> tokenizer.add_filter(ParticleFilter())
+            >>> raw_tokens = tokenizer.tokenize_text("私は学生です", apply_filters=False)
+            >>> filtered_tokens = tokenizer.apply_filters(raw_tokens)
+        """
+        result = tokens
+        for filter_impl in self._filters:
+            result = filter_impl.filter(result)
+        return result
+
+    def tokenize_text(
+        self, text: str, partial_ok: bool = False, apply_filters: bool = True
+    ) -> list[Token]:
         """Tokenize Japanese text into individual tokens.
 
         Args:
             text: Japanese text to tokenize
             partial_ok: If True, continue processing even if some segments fail (default: False)
+            apply_filters: If True, apply configured filters to results (default: True)
 
         Returns:
             List of Token objects with linguistic metadata
@@ -317,6 +393,10 @@ class JapaneseTokenizer:
                             f"Suggestion: Try setting partial_ok=True to skip problematic tokens"
                         ) from e
 
+            # Apply filters if requested
+            if apply_filters:
+                tokens = self.apply_filters(tokens)
+
             return tokens
 
         except TokenizationError:
@@ -333,13 +413,17 @@ class JapaneseTokenizer:
             ) from e
 
     def tokenize_file(
-        self, file_path: Path | str, partial_ok: bool = False
+        self,
+        file_path: Path | str,
+        partial_ok: bool = False,
+        apply_filters: bool = True,
     ) -> list[Token]:
         """Tokenize Japanese text from a file.
 
         Args:
             file_path: Path to the text file to tokenize (Path object or string)
             partial_ok: If True, continue processing even if some segments fail (default: False)
+            apply_filters: If True, apply configured filters to results (default: True)
 
         Returns:
             List of Token objects with linguistic metadata
@@ -431,7 +515,9 @@ class JapaneseTokenizer:
 
         # Tokenize the text
         try:
-            return self.tokenize_text(text, partial_ok=partial_ok)
+            return self.tokenize_text(
+                text, partial_ok=partial_ok, apply_filters=apply_filters
+            )
         except TokenizationError as e:
             # Add file context to tokenization errors
             raise TokenizationError(

@@ -1024,3 +1024,288 @@ class TestIntegration:
         # Test 3: Empty text (should not raise error)
         tokens = tokenizer.tokenize_text("")
         assert tokens == []
+
+
+class TestTokenFilters:
+    """Tests for token filtering functionality."""
+
+    def test_particle_filter_removes_particles(self) -> None:
+        """Test that ParticleFilter removes Japanese particles."""
+        from txt_to_anki.tokenizer.filters import ParticleFilter
+
+        tokenizer = JapaneseTokenizer()
+        tokenizer.add_filter(ParticleFilter())
+
+        text = "私は学生です。"
+        tokens = tokenizer.tokenize_text(text)
+
+        # Particles should be filtered out
+        surfaces = [t.surface for t in tokens]
+        assert "は" not in surfaces  # は is a particle
+
+        # Content words should remain
+        assert "私" in surfaces
+        assert "学生" in surfaces
+
+    def test_punctuation_filter_removes_punctuation(self) -> None:
+        """Test that PunctuationFilter removes punctuation marks."""
+        from txt_to_anki.tokenizer.filters import PunctuationFilter
+
+        tokenizer = JapaneseTokenizer()
+        tokenizer.add_filter(PunctuationFilter())
+
+        text = "こんにちは。元気ですか？"
+        tokens = tokenizer.tokenize_text(text)
+
+        # Punctuation should be filtered out
+        surfaces = [t.surface for t in tokens]
+        assert "。" not in surfaces
+        assert "？" not in surfaces
+
+        # Content words should remain
+        assert "こんにちは" in surfaces
+        assert "元気" in surfaces
+
+    def test_multiple_filters_applied_in_order(self) -> None:
+        """Test that multiple filters are applied sequentially."""
+        from txt_to_anki.tokenizer.filters import ParticleFilter, PunctuationFilter
+
+        tokenizer = JapaneseTokenizer()
+        tokenizer.add_filter(ParticleFilter())
+        tokenizer.add_filter(PunctuationFilter())
+
+        text = "私は学生です。"
+        tokens = tokenizer.tokenize_text(text)
+
+        # Both particles and punctuation should be filtered
+        surfaces = [t.surface for t in tokens]
+        assert "は" not in surfaces  # Particle
+        assert "。" not in surfaces  # Punctuation
+
+        # Content words should remain
+        assert "私" in surfaces
+        assert "学生" in surfaces
+
+    def test_set_filters_replaces_existing_filters(self) -> None:
+        """Test that set_filters replaces existing filters."""
+        from txt_to_anki.tokenizer.filters import ParticleFilter, PunctuationFilter
+
+        tokenizer = JapaneseTokenizer()
+        tokenizer.add_filter(ParticleFilter())
+
+        # Replace with different filter
+        tokenizer.set_filters([PunctuationFilter()])
+
+        text = "私は学生です。"
+        tokens = tokenizer.tokenize_text(text)
+
+        surfaces = [t.surface for t in tokens]
+        # Particle should NOT be filtered (ParticleFilter was replaced)
+        assert "は" in surfaces
+        # Punctuation should be filtered (PunctuationFilter is active)
+        assert "。" not in surfaces
+
+    def test_clear_filters_removes_all_filters(self) -> None:
+        """Test that clear_filters removes all filters."""
+        from txt_to_anki.tokenizer.filters import ParticleFilter, PunctuationFilter
+
+        tokenizer = JapaneseTokenizer()
+        tokenizer.add_filter(ParticleFilter())
+        tokenizer.add_filter(PunctuationFilter())
+
+        # Clear all filters
+        tokenizer.clear_filters()
+
+        text = "私は学生です。"
+        tokens = tokenizer.tokenize_text(text)
+
+        surfaces = [t.surface for t in tokens]
+        # Nothing should be filtered
+        assert "は" in surfaces  # Particle
+        assert "。" in surfaces  # Punctuation
+
+    def test_apply_filters_manually(self) -> None:
+        """Test manually applying filters to token list."""
+        from txt_to_anki.tokenizer.filters import ParticleFilter
+
+        tokenizer = JapaneseTokenizer()
+        tokenizer.add_filter(ParticleFilter())
+
+        text = "私は学生です。"
+        # Get raw tokens without filtering
+        raw_tokens = tokenizer.tokenize_text(text, apply_filters=False)
+
+        # Manually apply filters
+        filtered_tokens = tokenizer.apply_filters(raw_tokens)
+
+        # Raw tokens should include particles
+        raw_surfaces = [t.surface for t in raw_tokens]
+        assert "は" in raw_surfaces
+
+        # Filtered tokens should not include particles
+        filtered_surfaces = [t.surface for t in filtered_tokens]
+        assert "は" not in filtered_surfaces
+
+    def test_tokenize_with_apply_filters_false(self) -> None:
+        """Test that apply_filters=False bypasses filtering."""
+        from txt_to_anki.tokenizer.filters import ParticleFilter
+
+        tokenizer = JapaneseTokenizer()
+        tokenizer.add_filter(ParticleFilter())
+
+        text = "私は学生です。"
+
+        # With filtering
+        filtered_tokens = tokenizer.tokenize_text(text, apply_filters=True)
+        filtered_surfaces = [t.surface for t in filtered_tokens]
+        assert "は" not in filtered_surfaces
+
+        # Without filtering
+        unfiltered_tokens = tokenizer.tokenize_text(text, apply_filters=False)
+        unfiltered_surfaces = [t.surface for t in unfiltered_tokens]
+        assert "は" in unfiltered_surfaces
+
+    def test_tokenize_file_with_filters(self) -> None:
+        """Test that filters work with file tokenization."""
+        from txt_to_anki.tokenizer.filters import ParticleFilter, PunctuationFilter
+
+        with tempfile.NamedTemporaryFile(
+            mode="w", encoding="utf-8", suffix=".txt", delete=False
+        ) as f:
+            f.write("私は学生です。今日は良い天気ですね。")
+            temp_path = Path(f.name)
+
+        try:
+            tokenizer = JapaneseTokenizer()
+            tokenizer.add_filter(ParticleFilter())
+            tokenizer.add_filter(PunctuationFilter())
+
+            tokens = tokenizer.tokenize_file(temp_path)
+            surfaces = [t.surface for t in tokens]
+
+            # Particles and punctuation should be filtered
+            assert "は" not in surfaces
+            assert "。" not in surfaces
+
+            # Content words should remain
+            assert "私" in surfaces
+            assert "学生" in surfaces
+            assert "今日" in surfaces
+
+        finally:
+            temp_path.unlink()
+
+    def test_particle_filter_preserves_non_particles(self) -> None:
+        """Test that ParticleFilter only removes particles."""
+        from txt_to_anki.tokenizer.filters import ParticleFilter
+
+        tokenizer = JapaneseTokenizer()
+        text = "私は日本語を勉強します。"
+        raw_tokens = tokenizer.tokenize_text(text, apply_filters=False)
+
+        # Apply particle filter
+        particle_filter = ParticleFilter()
+        filtered_tokens = particle_filter.filter(raw_tokens)
+
+        # Count particles in raw tokens
+        raw_particles = [t for t in raw_tokens if t.part_of_speech == "助詞"]
+        assert len(raw_particles) > 0  # Should have particles
+
+        # Filtered tokens should have no particles
+        filtered_particles = [t for t in filtered_tokens if t.part_of_speech == "助詞"]
+        assert len(filtered_particles) == 0
+
+        # Non-particles should be preserved
+        raw_non_particles = [t for t in raw_tokens if t.part_of_speech != "助詞"]
+        filtered_non_particles = [
+            t for t in filtered_tokens if t.part_of_speech != "助詞"
+        ]
+        assert len(filtered_non_particles) == len(raw_non_particles)
+
+    def test_punctuation_filter_handles_various_punctuation(self) -> None:
+        """Test that PunctuationFilter handles various punctuation types."""
+        from txt_to_anki.tokenizer.filters import PunctuationFilter
+
+        tokenizer = JapaneseTokenizer()
+        text = "こんにちは！元気ですか？「はい」と答えました。"
+        raw_tokens = tokenizer.tokenize_text(text, apply_filters=False)
+
+        # Apply punctuation filter
+        punctuation_filter = PunctuationFilter()
+        filtered_tokens = punctuation_filter.filter(raw_tokens)
+
+        filtered_surfaces = [t.surface for t in filtered_tokens]
+
+        # Various punctuation should be removed
+        assert "！" not in filtered_surfaces
+        assert "？" not in filtered_surfaces
+        assert "「" not in filtered_surfaces
+        assert "」" not in filtered_surfaces
+        assert "。" not in filtered_surfaces
+
+        # Content words should remain
+        assert "こんにちは" in filtered_surfaces
+        assert "元気" in filtered_surfaces
+        assert "はい" in filtered_surfaces
+
+    def test_filters_with_empty_token_list(self) -> None:
+        """Test that filters handle empty token lists gracefully."""
+        from txt_to_anki.tokenizer.filters import ParticleFilter, PunctuationFilter
+
+        particle_filter = ParticleFilter()
+        punctuation_filter = PunctuationFilter()
+
+        empty_tokens: list[Token] = []
+
+        # Should return empty list without errors
+        assert particle_filter.filter(empty_tokens) == []
+        assert punctuation_filter.filter(empty_tokens) == []
+
+    def test_custom_filter_implementation(self) -> None:
+        """Test that custom filters can be implemented and used."""
+
+        # Create a custom filter that removes short tokens
+        class ShortTokenFilter:
+            def filter(self, tokens: list[Token]) -> list[Token]:
+                return [t for t in tokens if len(t.surface) > 1]
+
+        tokenizer = JapaneseTokenizer()
+        tokenizer.add_filter(ShortTokenFilter())
+
+        text = "私は学生です。"
+        tokens = tokenizer.tokenize_text(text)
+
+        # Single-character tokens should be filtered
+        surfaces = [t.surface for t in tokens]
+        assert "は" not in surfaces  # Single character
+        assert "。" not in surfaces  # Single character
+
+        # Multi-character tokens should remain
+        assert "私" in surfaces or "学生" in surfaces
+
+    def test_filter_composition(self) -> None:
+        """Test that filters can be composed and chained."""
+        from txt_to_anki.tokenizer.filters import ParticleFilter, PunctuationFilter
+
+        tokenizer = JapaneseTokenizer()
+
+        # Add multiple filters
+        filters = [ParticleFilter(), PunctuationFilter()]
+        tokenizer.set_filters(filters)
+
+        text = "私は学生です。今日は良い天気ですね！"
+        tokens = tokenizer.tokenize_text(text)
+
+        surfaces = [t.surface for t in tokens]
+
+        # Both particles and punctuation should be filtered
+        assert "は" not in surfaces
+        assert "。" not in surfaces
+        assert "！" not in surfaces
+
+        # Content words should remain
+        assert "私" in surfaces
+        assert "学生" in surfaces
+        assert "今日" in surfaces
+        assert "良い" in surfaces
+        assert "天気" in surfaces
