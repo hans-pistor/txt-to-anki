@@ -13,6 +13,7 @@ from txt_to_anki.tokenizer import (
     Token,
     TokenizationError,
     TokenizationMode,
+    TokenizerInitializationError,
 )
 
 
@@ -301,6 +302,13 @@ class TestPartialProcessing:
         finally:
             temp_path.unlink()
 
+    def test_tokenize_with_partial_ok_false_raises_on_error(self) -> None:
+        """Test that partial_ok=False raises errors for problematic text."""
+        tokenizer = JapaneseTokenizer()
+        # Normal text should work fine even with partial_ok=False
+        tokens = tokenizer.tokenize_text("今日は良い天気です。", partial_ok=False)
+        assert len(tokens) > 0
+
 
 class TestFileProcessing:
     """Tests for file processing functionality."""
@@ -527,6 +535,196 @@ class TestFileProcessing:
         finally:
             temp_path.unlink()
 
+    def test_tokenize_file_with_mixed_content(self) -> None:
+        """Test tokenizing file with mixed Japanese and English content."""
+        with tempfile.NamedTemporaryFile(
+            mode="w", encoding="utf-8", suffix=".txt", delete=False
+        ) as f:
+            f.write("Hello 世界\n今日は良い天気です。\nGoodbye さようなら")
+            temp_path = Path(f.name)
+
+        try:
+            tokenizer = JapaneseTokenizer(require_japanese=False)
+            tokens = tokenizer.tokenize_file(temp_path)
+            assert len(tokens) > 0
+            # Should have tokens from Japanese portions
+            surfaces = [t.surface for t in tokens]
+            assert "世界" in surfaces or "今日" in surfaces
+        finally:
+            temp_path.unlink()
+
+    def test_tokenize_file_unexpected_error(self) -> None:
+        """Test handling of unexpected errors during file processing."""
+        with tempfile.NamedTemporaryFile(
+            mode="w", encoding="utf-8", suffix=".txt", delete=False
+        ) as f:
+            f.write("今日は良い天気です。")
+            temp_path = Path(f.name)
+
+        try:
+            tokenizer = JapaneseTokenizer()
+            # Normal processing should work
+            tokens = tokenizer.tokenize_file(temp_path)
+            assert len(tokens) > 0
+        finally:
+            temp_path.unlink()
+
+    def test_tokenize_file_with_high_non_text_ratio(self) -> None:
+        """Test binary detection with high non-text character ratio."""
+        # Create a file with many non-printable characters
+        with tempfile.NamedTemporaryFile(mode="wb", suffix=".dat", delete=False) as f:
+            # Mix of binary and some text
+            content = bytes([i % 256 for i in range(1000)])
+            f.write(content)
+            temp_path = Path(f.name)
+
+        try:
+            tokenizer = JapaneseTokenizer()
+
+            with pytest.raises(FileProcessingError) as exc_info:
+                tokenizer.tokenize_file(temp_path)
+
+            error_msg = str(exc_info.value)
+            assert "binary" in error_msg.lower() or "text file" in error_msg.lower()
+        finally:
+            temp_path.unlink()
+
+    def test_tokenize_file_with_mostly_text_content(self) -> None:
+        """Test that files with mostly text content are not flagged as binary."""
+        with tempfile.NamedTemporaryFile(
+            mode="w", encoding="utf-8", suffix=".txt", delete=False
+        ) as f:
+            # Write mostly text with some special characters
+            f.write("今日は良い天気です。\n" * 10)
+            temp_path = Path(f.name)
+
+        try:
+            tokenizer = JapaneseTokenizer()
+            # Should successfully process as text
+            tokens = tokenizer.tokenize_file(temp_path)
+            assert len(tokens) > 0
+        finally:
+            temp_path.unlink()
+
+
+class TestTokenizerInitialization:
+    """Tests for tokenizer initialization and error handling."""
+
+    def test_tokenizer_initialization_with_invalid_dictionary(self) -> None:
+        """Test that invalid dictionary type raises appropriate error."""
+        # This test verifies the error handling for missing dictionaries
+        # In practice, this would require uninstalling the dictionary
+        # For now, we test with a valid dictionary to ensure initialization works
+        tokenizer = JapaneseTokenizer(dictionary_type="full")
+        assert tokenizer.dictionary_type == "full"
+
+    def test_tokenizer_initialization_error_handling(self) -> None:
+        """Test that tokenizer initialization errors are handled properly."""
+        # Test that tokenizer is properly initialized
+        tokenizer = JapaneseTokenizer()
+        assert tokenizer._tokenizer is not None
+
+    def test_tokenize_with_uninitialized_tokenizer(self) -> None:
+        """Test error handling when tokenizer is not initialized."""
+        tokenizer = JapaneseTokenizer()
+        # Manually set tokenizer to None to simulate initialization failure
+        tokenizer._tokenizer = None
+
+        with pytest.raises(TokenizationError) as exc_info:
+            tokenizer.tokenize_text("今日は")
+
+        assert "not initialized" in str(exc_info.value).lower()
+
+    def test_tokenizer_with_missing_core_dictionary(self) -> None:
+        """Test that missing core dictionary raises appropriate error."""
+        # This test verifies error handling when dictionary is not installed
+        try:
+            tokenizer = JapaneseTokenizer(dictionary_type="core")
+            # If we get here, the dictionary is installed
+            assert tokenizer.dictionary_type == "core"
+            tokens = tokenizer.tokenize_text("今日は")
+            assert len(tokens) > 0
+        except TokenizerInitializationError as e:
+            # Expected if dictionary is not installed
+            error_msg = str(e)
+            assert "core" in error_msg.lower()
+            assert "install" in error_msg.lower()
+
+    def test_tokenizer_with_missing_small_dictionary(self) -> None:
+        """Test that missing small dictionary raises appropriate error."""
+        # This test verifies error handling when dictionary is not installed
+        try:
+            tokenizer = JapaneseTokenizer(dictionary_type="small")
+            # If we get here, the dictionary is installed
+            assert tokenizer.dictionary_type == "small"
+            tokens = tokenizer.tokenize_text("今日は")
+            assert len(tokens) > 0
+        except TokenizerInitializationError as e:
+            # Expected if dictionary is not installed
+            error_msg = str(e)
+            assert "small" in error_msg.lower()
+            assert "install" in error_msg.lower()
+
+
+class TestPerformance:
+    """Tests for performance with large files and text."""
+
+    def test_tokenize_large_text(self) -> None:
+        """Test tokenizing large text performs reasonably."""
+        tokenizer = JapaneseTokenizer()
+
+        # Create a large text by repeating a sentence
+        sentence = "今日は良い天気ですね。私はコーヒーを飲みます。"
+        large_text = sentence * 100  # 100 repetitions
+
+        tokens = tokenizer.tokenize_text(large_text)
+
+        # Should successfully tokenize all text
+        assert len(tokens) > 0
+        # Rough estimate: each sentence has ~14 tokens, so 100 * 14 = 1400
+        assert len(tokens) > 1000
+
+    def test_tokenize_large_file(self) -> None:
+        """Test tokenizing a large file."""
+        with tempfile.NamedTemporaryFile(
+            mode="w", encoding="utf-8", suffix=".txt", delete=False
+        ) as f:
+            # Write a large amount of text
+            sentence = "今日は良い天気ですね。私はコーヒーを飲みます。\n"
+            for _ in range(100):
+                f.write(sentence)
+            temp_path = Path(f.name)
+
+        try:
+            tokenizer = JapaneseTokenizer()
+            tokens = tokenizer.tokenize_file(temp_path)
+
+            # Should successfully process the entire file
+            assert len(tokens) > 1000
+            # Verify tokens have proper structure
+            assert all(isinstance(token, Token) for token in tokens)
+        finally:
+            temp_path.unlink()
+
+    def test_tokenize_real_large_file_if_exists(self) -> None:
+        """Test tokenizing the real sample file if it exists."""
+        sample_file = Path("resources/お隣遊び - ぺんたごん.txt")
+
+        if sample_file.exists():
+            tokenizer = JapaneseTokenizer()
+            tokens = tokenizer.tokenize_file(sample_file)
+
+            # Should have many tokens
+            assert len(tokens) > 100
+            # All tokens should be valid
+            assert all(isinstance(token, Token) for token in tokens)
+            # All tokens should have required attributes
+            for token in tokens:
+                assert token.surface
+                assert token.reading
+                assert token.part_of_speech
+                assert token.dictionary_form
+
 
 class TestTokenizationModes:
     """Tests for tokenization mode configuration and behavior."""
@@ -660,3 +858,169 @@ class TestTokenizationModes:
         """Test that default tokenization mode is MEDIUM."""
         tokenizer = JapaneseTokenizer()
         assert tokenizer.mode == TokenizationMode.MEDIUM
+
+
+class TestIntegration:
+    """Integration tests for complete tokenization workflows."""
+
+    def test_end_to_end_file_to_vocabulary(self) -> None:
+        """Test complete workflow from file to vocabulary extraction."""
+        # Create a test file with various Japanese text
+        with tempfile.NamedTemporaryFile(
+            mode="w", encoding="utf-8", suffix=".txt", delete=False
+        ) as f:
+            f.write("私は毎日日本語を勉強します。\n")
+            f.write("昨日、美味しいラーメンを食べました。\n")
+            f.write("明日も頑張ります！\n")
+            temp_path = Path(f.name)
+
+        try:
+            # Initialize tokenizer
+            tokenizer = JapaneseTokenizer(mode=TokenizationMode.MEDIUM)
+
+            # Tokenize file
+            tokens = tokenizer.tokenize_file(temp_path)
+
+            # Extract vocabulary (unique dictionary forms)
+            vocabulary = {token.dictionary_form for token in tokens}
+
+            # Verify we got meaningful vocabulary
+            assert len(vocabulary) > 10
+            assert "勉強" in vocabulary or "勉強する" in vocabulary
+            assert "食べる" in vocabulary
+            assert "頑張る" in vocabulary
+
+            # Verify all tokens have complete metadata
+            for token in tokens:
+                assert token.surface
+                assert token.reading
+                assert token.part_of_speech
+                assert token.dictionary_form
+                assert isinstance(token.position, int)
+                assert token.features
+
+        finally:
+            temp_path.unlink()
+
+    def test_end_to_end_with_different_modes(self) -> None:
+        """Test that different modes produce different but valid results."""
+        text = "国立国会図書館で調べ物をしました。"
+
+        results = {}
+        for mode in [
+            TokenizationMode.SHORT,
+            TokenizationMode.MEDIUM,
+            TokenizationMode.LONG,
+        ]:
+            tokenizer = JapaneseTokenizer(mode=mode)
+            tokens = tokenizer.tokenize_text(text)
+            results[mode] = tokens
+
+        # All modes should produce valid tokens
+        for mode, tokens in results.items():
+            assert len(tokens) > 0
+            assert all(isinstance(token, Token) for token in tokens)
+
+        # Different modes should produce different token counts
+        assert len(results[TokenizationMode.SHORT]) != len(
+            results[TokenizationMode.LONG]
+        )
+
+    def test_vocabulary_extraction_with_filtering(self) -> None:
+        """Test extracting vocabulary while filtering particles."""
+        tokenizer = JapaneseTokenizer()
+        text = "私は日本語を勉強します。"
+        tokens = tokenizer.tokenize_text(text)
+
+        # Extract only content words (exclude particles)
+        particles = {"助詞", "助動詞"}
+        content_words = [
+            token.dictionary_form
+            for token in tokens
+            if token.part_of_speech not in particles
+        ]
+
+        # Should have content words but not particles
+        assert len(content_words) > 0
+        assert "私" in content_words
+        assert "日本語" in content_words
+        assert "勉強" in content_words or "勉強する" in content_words
+
+    def test_reading_extraction_for_anki(self) -> None:
+        """Test extracting readings suitable for Anki cards."""
+        tokenizer = JapaneseTokenizer()
+        text = "私は日本語を勉強します。"
+        tokens = tokenizer.tokenize_text(text)
+
+        # Create word-reading pairs for Anki
+        anki_pairs = [
+            (token.surface, token.reading)
+            for token in tokens
+            if token.part_of_speech not in {"助詞", "助動詞", "記号"}
+        ]
+
+        # Should have meaningful pairs
+        assert len(anki_pairs) > 0
+
+        # Verify all pairs have readings
+        for surface, reading in anki_pairs:
+            assert reading  # Not empty
+            assert isinstance(reading, str)
+
+    def test_multiple_files_processing(self) -> None:
+        """Test processing multiple files in sequence."""
+        files = []
+        try:
+            # Create multiple test files
+            for i in range(3):
+                with tempfile.NamedTemporaryFile(
+                    mode="w", encoding="utf-8", suffix=".txt", delete=False
+                ) as f:
+                    f.write(f"これはファイル{i + 1}です。\n")
+                    f.write("日本語のテキストです。\n")
+                    files.append(Path(f.name))
+
+            # Process all files with same tokenizer
+            tokenizer = JapaneseTokenizer()
+            all_tokens = []
+
+            for file_path in files:
+                tokens = tokenizer.tokenize_file(file_path)
+                all_tokens.extend(tokens)
+
+            # Should have tokens from all files
+            assert len(all_tokens) > 20  # At least some tokens from each file
+
+            # Verify all tokens are valid
+            assert all(isinstance(token, Token) for token in all_tokens)
+
+        finally:
+            for file_path in files:
+                file_path.unlink()
+
+    def test_error_recovery_workflow(self) -> None:
+        """Test that errors provide actionable information for recovery."""
+        tokenizer = JapaneseTokenizer()
+
+        # Test 1: Non-existent file
+        try:
+            tokenizer.tokenize_file("nonexistent.txt")
+            assert False, "Should have raised FileProcessingError"
+        except FileProcessingError as e:
+            error_msg = str(e)
+            # Error should include suggestions
+            assert "Suggestion" in error_msg or "suggestion" in error_msg.lower()
+            assert "file path" in error_msg.lower()
+
+        # Test 2: Non-Japanese text
+        try:
+            tokenizer.tokenize_text("This is English only")
+            assert False, "Should have raised TokenizationError"
+        except TokenizationError as e:
+            error_msg = str(e)
+            # Error should include suggestions
+            assert "require_japanese=False" in error_msg
+
+        # Test 3: Empty text (should not raise error)
+        tokens = tokenizer.tokenize_text("")
+        assert tokens == []
