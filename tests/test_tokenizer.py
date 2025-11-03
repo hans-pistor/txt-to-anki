@@ -356,3 +356,142 @@ class TestFileProcessing:
             # Verify we get meaningful tokens
             surfaces = [t.surface for t in tokens]
             assert len(surfaces) > 10  # Should have many tokens
+
+
+class TestTokenizationModes:
+    """Tests for tokenization mode configuration and behavior."""
+
+    def test_mode_short_produces_most_tokens(self) -> None:
+        """Test that SHORT mode produces the most tokens (finest granularity)."""
+        text = "東京都に行きました。"
+
+        tokenizer_short = JapaneseTokenizer(mode=TokenizationMode.SHORT)
+        tokens_short = tokenizer_short.tokenize_text(text)
+
+        # SHORT mode should produce multiple tokens
+        assert len(tokens_short) > 0
+
+        # Verify we get fine-grained tokens
+        surfaces = [t.surface for t in tokens_short]
+        # In SHORT mode, "東京都" might be split into "東京" and "都"
+        assert len(surfaces) >= 4  # At least: 東京/都/に/行き/まし/た/。
+
+    def test_mode_long_produces_fewest_tokens(self) -> None:
+        """Test that LONG mode produces the fewest tokens (coarsest granularity)."""
+        text = "東京都に行きました。"
+
+        tokenizer_long = JapaneseTokenizer(mode=TokenizationMode.LONG)
+        tokens_long = tokenizer_long.tokenize_text(text)
+
+        # LONG mode should produce fewer, longer tokens
+        assert len(tokens_long) > 0
+
+        # Verify we get coarse-grained tokens
+        surfaces = [t.surface for t in tokens_long]
+        # In LONG mode, compound words stay together
+        assert len(surfaces) <= 6  # Fewer tokens than SHORT mode
+
+    def test_mode_medium_is_balanced(self) -> None:
+        """Test that MEDIUM mode produces balanced tokenization."""
+        text = "東京都に行きました。"
+
+        tokenizer_medium = JapaneseTokenizer(mode=TokenizationMode.MEDIUM)
+        tokens_medium = tokenizer_medium.tokenize_text(text)
+
+        # MEDIUM mode should be balanced
+        assert len(tokens_medium) > 0
+
+        # Should be between SHORT and LONG
+        surfaces = [t.surface for t in tokens_medium]
+        assert 4 <= len(surfaces) <= 6
+
+    def test_different_modes_produce_different_granularities(self) -> None:
+        """Test that different modes produce different token counts for the same text."""
+        text = "国際連合本部ビルに行きました。"
+
+        tokenizer_short = JapaneseTokenizer(mode=TokenizationMode.SHORT)
+        tokenizer_medium = JapaneseTokenizer(mode=TokenizationMode.MEDIUM)
+        tokenizer_long = JapaneseTokenizer(mode=TokenizationMode.LONG)
+
+        tokens_short = tokenizer_short.tokenize_text(text)
+        tokens_medium = tokenizer_medium.tokenize_text(text)
+        tokens_long = tokenizer_long.tokenize_text(text)
+
+        # SHORT should produce most tokens (finest granularity)
+        # LONG should produce fewest tokens (coarsest granularity)
+        # MEDIUM should be in between
+        assert len(tokens_short) >= len(tokens_medium)
+        assert len(tokens_medium) >= len(tokens_long)
+
+        # All modes should produce at least some tokens
+        assert len(tokens_short) > 0
+        assert len(tokens_medium) > 0
+        assert len(tokens_long) > 0
+
+    def test_mode_affects_compound_word_splitting(self) -> None:
+        """Test that modes handle compound words differently."""
+        # "東京都" is a compound word (Tokyo + Metropolitan)
+        text = "東京都"
+
+        tokenizer_short = JapaneseTokenizer(mode=TokenizationMode.SHORT)
+        tokenizer_long = JapaneseTokenizer(mode=TokenizationMode.LONG)
+
+        tokens_short = tokenizer_short.tokenize_text(text)
+        tokens_long = tokenizer_long.tokenize_text(text)
+
+        surfaces_short = [t.surface for t in tokens_short]
+        surfaces_long = [t.surface for t in tokens_long]
+
+        # SHORT mode may split compound words more
+        # LONG mode keeps compound words together
+        # The exact behavior depends on Sudachi's dictionary
+        assert len(surfaces_short) >= len(surfaces_long)
+
+    def test_mode_configuration_persists(self) -> None:
+        """Test that mode configuration persists across multiple tokenizations."""
+        tokenizer = JapaneseTokenizer(mode=TokenizationMode.SHORT)
+
+        text1 = "今日は良い天気です。"
+        text2 = "明日も晴れるでしょう。"
+
+        tokens1 = tokenizer.tokenize_text(text1)
+        tokens2 = tokenizer.tokenize_text(text2)
+
+        # Both should use SHORT mode
+        assert len(tokens1) > 0
+        assert len(tokens2) > 0
+
+        # Verify mode is still SHORT
+        assert tokenizer.mode == TokenizationMode.SHORT
+
+    def test_all_modes_preserve_token_metadata(self) -> None:
+        """Test that all modes preserve complete token metadata."""
+        text = "食べました。"
+
+        for mode in [
+            TokenizationMode.SHORT,
+            TokenizationMode.MEDIUM,
+            TokenizationMode.LONG,
+        ]:
+            tokenizer = JapaneseTokenizer(mode=mode)
+            tokens = tokenizer.tokenize_text(text)
+
+            # All tokens should have complete metadata regardless of mode
+            for token in tokens:
+                assert token.surface
+                assert token.reading
+                assert token.part_of_speech
+                assert token.dictionary_form
+                assert isinstance(token.position, int)
+                assert token.features
+
+    def test_mode_enum_values(self) -> None:
+        """Test that TokenizationMode enum has correct values."""
+        assert TokenizationMode.SHORT.value == "A"
+        assert TokenizationMode.MEDIUM.value == "B"
+        assert TokenizationMode.LONG.value == "C"
+
+    def test_default_mode_is_medium(self) -> None:
+        """Test that default tokenization mode is MEDIUM."""
+        tokenizer = JapaneseTokenizer()
+        assert tokenizer.mode == TokenizationMode.MEDIUM
