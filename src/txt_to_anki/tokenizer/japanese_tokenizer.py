@@ -7,11 +7,13 @@ for morphological analysis and token extraction from Japanese text.
 from __future__ import annotations
 
 from enum import Enum
+from pathlib import Path
 
 from sudachipy import Dictionary  # type: ignore[import-untyped]
 from sudachipy.tokenizer import Tokenizer as SudachiTokenizer  # type: ignore[import-untyped]
 
 from txt_to_anki.tokenizer.exceptions import (
+    FileProcessingError,
     TokenizationError,
     TokenizerInitializationError,
 )
@@ -152,3 +154,82 @@ class JapaneseTokenizer:
 
         except Exception as e:
             raise TokenizationError(f"Failed to tokenize text: {e}") from e
+
+    def tokenize_file(self, file_path: Path | str) -> list[Token]:
+        """Tokenize Japanese text from a file.
+
+        Args:
+            file_path: Path to the text file to tokenize (Path object or string)
+
+        Returns:
+            List of Token objects with linguistic metadata
+
+        Raises:
+            FileProcessingError: If file cannot be read or has encoding issues
+            TokenizationError: If tokenization fails
+
+        Example:
+            >>> tokenizer = JapaneseTokenizer()
+            >>> tokens = tokenizer.tokenize_file("japanese_text.txt")
+            >>> len(tokens) > 0
+            True
+        """
+        # Convert string to Path if needed
+        if isinstance(file_path, str):
+            file_path = Path(file_path)
+
+        # Validate file exists
+        if not file_path.exists():
+            raise FileProcessingError(
+                f"File not found: {file_path}\n"
+                f"Please check that the file path is correct and the file exists."
+            )
+
+        # Validate it's a file (not a directory)
+        if not file_path.is_file():
+            raise FileProcessingError(
+                f"Path is not a file: {file_path}\n"
+                f"Please provide a path to a text file, not a directory."
+            )
+
+        # Try to read the file with UTF-8 encoding
+        try:
+            text = file_path.read_text(encoding="utf-8")
+        except UnicodeDecodeError as e:
+            raise FileProcessingError(
+                f"File encoding error: {file_path}\n"
+                f"The file is not valid UTF-8. Please convert the file to UTF-8 encoding.\n"
+                f"You can use tools like 'iconv' or text editors to convert the encoding.\n"
+                f"Original error: {e}"
+            ) from e
+        except PermissionError as e:
+            raise FileProcessingError(
+                f"Permission denied: {file_path}\n"
+                f"You don't have permission to read this file.\n"
+                f"Please check file permissions."
+            ) from e
+        except OSError as e:
+            raise FileProcessingError(
+                f"Error reading file: {file_path}\n"
+                f"An OS error occurred while reading the file.\n"
+                f"Original error: {e}"
+            ) from e
+
+        # Validate file is not empty
+        if not text or not text.strip():
+            raise FileProcessingError(
+                f"File is empty or contains only whitespace: {file_path}\n"
+                f"Please provide a file with Japanese text content."
+            )
+
+        # Tokenize the text
+        try:
+            return self.tokenize_text(text)
+        except TokenizationError:
+            # Re-raise tokenization errors as-is
+            raise
+        except Exception as e:
+            raise FileProcessingError(
+                f"Unexpected error processing file: {file_path}\n"
+                f"Original error: {e}"
+            ) from e

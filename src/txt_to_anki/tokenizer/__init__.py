@@ -9,5 +9,17 @@ from __future__ import annotations
 
 from txt_to_anki.tokenizer.token_models import Token
 from txt_to_anki.tokenizer.japanese_tokenizer import JapaneseTokenizer, TokenizationMode
+from txt_to_anki.tokenizer.exceptions import (
+    FileProcessingError,
+    TokenizationError,
+    TokenizerInitializationError,
+)
 
-__all__ = ["Token", "JapaneseTokenizer", "TokenizationMode"]
+__all__ = [
+    "Token",
+    "JapaneseTokenizer",
+    "TokenizationMode",
+    "FileProcessingError",
+    "TokenizationError",
+    "TokenizerInitializationError",
+]
