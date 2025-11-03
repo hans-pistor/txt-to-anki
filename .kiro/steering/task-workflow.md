@@ -2,13 +2,27 @@
 
 When implementing tasks from `.kiro/specs/*/tasks.md`, ALWAYS follow this complete workflow:
 
+## ⚠️ CRITICAL: PRE-IMPLEMENTATION CHECKLIST ⚠️
+
+**Before writing ANY code, complete these steps IN ORDER:**
+
+- [ ] 1. Read the task from tasks.md
+- [ ] 2. Create GitHub issue using `gh issue create`
+- [ ] 3. Note the issue number (e.g., #42)
+- [ ] 4. Create feature branch: `git checkout -b feature/<issue-number>-<description>`
+- [ ] 5. NOW you can start coding
+
+**DO NOT SKIP STEP 2! GitHub issue creation is MANDATORY before any code changes.**
+
 ## 1. Before Starting Implementation
 
-1. **Create GitHub Issue**:
+1. **Create GitHub Issue** (MANDATORY FIRST STEP):
+   - **DO THIS FIRST** before any code changes
    - Use the task title and details to create a descriptive issue
    - Follow the issue template from `github-workflow.md`
    - Include acceptance criteria from the task
    - Note the issue number (e.g., #42)
+   - **STOP and wait for issue creation before proceeding**
 
 2. **Create Feature Branch**:
    ```bash
@@ -99,12 +113,13 @@ gh pr create --title "feat(tokenizer): add file processing capabilities" --body 
 
 ## Important Notes
 
-- **ALWAYS create the issue BEFORE starting work**
+- **🚨 CRITICAL: Create the GitHub issue FIRST, before ANY code changes 🚨**
 - **ALWAYS create a feature branch from main**
 - **ALWAYS run mypy before committing** (blocking requirement)
 - **ALWAYS reference the issue in commits and PRs**
 - **NEVER commit directly to main**
 - **NEVER skip quality checks**
+- **NEVER start coding without a GitHub issue number**
 
 This workflow ensures:
 - Traceable changes linked to issues
