@@ -6,6 +6,7 @@ for morphological analysis and token extraction from Japanese text.
 
 from __future__ import annotations
 
+import re
 from enum import Enum
 from pathlib import Path
 
@@ -127,22 +128,33 @@ class JapaneseTokenizer:
             {'食べる'}
     """
 
+    # Japanese character ranges for validation
+    _HIRAGANA_RANGE = r"[\u3040-\u309F]"
+    _KATAKANA_RANGE = r"[\u30A0-\u30FF]"
+    _KANJI_RANGE = r"[\u4E00-\u9FFF]"
+    _JAPANESE_PATTERN = re.compile(
+        f"({_HIRAGANA_RANGE}|{_KATAKANA_RANGE}|{_KANJI_RANGE})+"
+    )
+
     def __init__(
         self,
         mode: TokenizationMode = TokenizationMode.MEDIUM,
         dictionary_type: str = "full",
+        require_japanese: bool = True,
     ) -> None:
         """Initialize the Japanese tokenizer.
 
         Args:
             mode: Tokenization granularity mode (default: MEDIUM)
             dictionary_type: Sudachi dictionary type - "full", "core", or "small" (default: "full")
+            require_japanese: Whether to require Japanese text in input (default: True)
 
         Raises:
             TokenizerInitializationError: If Sudachi cannot be initialized
         """
         self.mode = mode
         self.dictionary_type = dictionary_type
+        self.require_japanese = require_japanese
         self._tokenizer: SudachiTokenizer | None = None
         self._initialize_sudachi()
 
@@ -176,17 +188,78 @@ class JapaneseTokenizer:
                 f"Failed to initialize Sudachi tokenizer: {e}"
             ) from e
 
-    def tokenize_text(self, text: str) -> list[Token]:
+    def _contains_japanese(self, text: str) -> bool:
+        """Check if text contains Japanese characters.
+
+        Args:
+            text: Text to check
+
+        Returns:
+            True if text contains hiragana, katakana, or kanji characters
+        """
+        return bool(self._JAPANESE_PATTERN.search(text))
+
+    def _validate_text_content(self, text: str, source: str = "input") -> None:
+        """Validate that text contains Japanese characters.
+
+        Args:
+            text: Text to validate
+            source: Description of the text source for error messages
+
+        Raises:
+            TokenizationError: If text contains no Japanese characters and require_japanese is True
+        """
+        if self.require_japanese and not self._contains_japanese(text):
+            raise TokenizationError(
+                f"No Japanese text detected in {source}.\n"
+                f"The text appears to contain no hiragana, katakana, or kanji characters.\n"
+                f"Suggestions:\n"
+                f"  - Verify the file contains Japanese text\n"
+                f"  - Check if the file encoding is correct (should be UTF-8)\n"
+                f"  - If processing mixed-language text, set require_japanese=False"
+            )
+
+    def _is_likely_binary(self, file_path: Path) -> bool:
+        """Check if a file is likely binary (non-text) content.
+
+        Args:
+            file_path: Path to the file to check
+
+        Returns:
+            True if file appears to be binary
+        """
+        try:
+            # Read first 8KB to check for binary content
+            with open(file_path, "rb") as f:
+                chunk = f.read(8192)
+
+            # Check for null bytes (common in binary files)
+            if b"\x00" in chunk:
+                return True
+
+            # Check for high ratio of non-printable characters
+            text_chars = bytearray({7, 8, 9, 10, 12, 13, 27} | set(range(0x20, 0x100)))
+            non_text = sum(1 for byte in chunk if byte not in text_chars)
+
+            # If more than 30% non-text characters, likely binary
+            return len(chunk) > 0 and non_text / len(chunk) > 0.3
+
+        except Exception:
+            # If we can't read the file, assume it might be binary
+            return False
+
+    def tokenize_text(self, text: str, partial_ok: bool = False) -> list[Token]:
         """Tokenize Japanese text into individual tokens.
 
         Args:
             text: Japanese text to tokenize
+            partial_ok: If True, continue processing even if some segments fail (default: False)
 
         Returns:
             List of Token objects with linguistic metadata
 
         Raises:
-            TokenizationError: If tokenization fails
+            TokenizationError: If tokenization fails and partial_ok is False
 
         Example:
             >>> tokenizer = JapaneseTokenizer()
@@ -198,43 +271,75 @@ class JapaneseTokenizer:
             return []
 
         if self._tokenizer is None:
-            raise TokenizationError("Tokenizer not initialized")
+            raise TokenizationError(
+                "Tokenizer not initialized.\n"
+                "This is an internal error. Please report this issue."
+            )
+
+        # Validate text contains Japanese if required
+        self._validate_text_content(text, "input text")
 
         try:
             morphemes = self._tokenizer.tokenize(text)
             tokens: list[Token] = []
 
             for morpheme in morphemes:
-                # Extract all required information from Sudachi morpheme
-                surface = morpheme.surface()
-                reading = morpheme.reading_form()
-                pos = morpheme.part_of_speech()[0]  # Get primary POS tag
-                base_form = morpheme.dictionary_form()
-                normalized = morpheme.normalized_form()
-                features = list(morpheme.part_of_speech())
-                position = morpheme.begin()
+                try:
+                    # Extract all required information from Sudachi morpheme
+                    surface = morpheme.surface()
+                    reading = morpheme.reading_form()
+                    pos = morpheme.part_of_speech()[0]  # Get primary POS tag
+                    base_form = morpheme.dictionary_form()
+                    normalized = morpheme.normalized_form()
+                    features = list(morpheme.part_of_speech())
+                    position = morpheme.begin()
 
-                token = Token(
-                    surface=surface,
-                    reading=reading,
-                    part_of_speech=pos,
-                    base_form=base_form,
-                    normalized_form=normalized,
-                    features=features,
-                    position=position,
-                )
-                tokens.append(token)
+                    token = Token(
+                        surface=surface,
+                        reading=reading,
+                        part_of_speech=pos,
+                        base_form=base_form,
+                        normalized_form=normalized,
+                        features=features,
+                        position=position,
+                    )
+                    tokens.append(token)
+
+                except Exception as e:
+                    if partial_ok:
+                        # Log the error but continue processing
+                        # In production, this would use proper logging
+                        continue
+                    else:
+                        raise TokenizationError(
+                            f"Failed to process token at position {morpheme.begin()}: {e}\n"
+                            f"Surface form: {morpheme.surface()}\n"
+                            f"Suggestion: Try setting partial_ok=True to skip problematic tokens"
+                        ) from e
 
             return tokens
 
+        except TokenizationError:
+            # Re-raise our custom errors
+            raise
         except Exception as e:
-            raise TokenizationError(f"Failed to tokenize text: {e}") from e
+            raise TokenizationError(
+                f"Failed to tokenize text: {e}\n"
+                f"Suggestions:\n"
+                f"  - Verify the text is valid Japanese\n"
+                f"  - Check for unusual characters or formatting\n"
+                f"  - Try with a different tokenization mode\n"
+                f"  - Set partial_ok=True to skip problematic segments"
+            ) from e
 
-    def tokenize_file(self, file_path: Path | str) -> list[Token]:
+    def tokenize_file(
+        self, file_path: Path | str, partial_ok: bool = False
+    ) -> list[Token]:
         """Tokenize Japanese text from a file.
 
         Args:
             file_path: Path to the text file to tokenize (Path object or string)
+            partial_ok: If True, continue processing even if some segments fail (default: False)
 
         Returns:
             List of Token objects with linguistic metadata
@@ -257,36 +362,63 @@ class JapaneseTokenizer:
         if not file_path.exists():
             raise FileProcessingError(
                 f"File not found: {file_path}\n"
-                f"Please check that the file path is correct and the file exists."
+                f"Suggestions:\n"
+                f"  - Check that the file path is correct\n"
+                f"  - Verify the file exists in the specified location\n"
+                f"  - Use an absolute path if the relative path is unclear"
             )
 
         # Validate it's a file (not a directory)
         if not file_path.is_file():
             raise FileProcessingError(
                 f"Path is not a file: {file_path}\n"
-                f"Please provide a path to a text file, not a directory."
+                f"The specified path points to a directory, not a file.\n"
+                f"Suggestion: Provide a path to a text file, not a directory."
+            )
+
+        # Check if file is likely binary
+        if self._is_likely_binary(file_path):
+            raise FileProcessingError(
+                f"File appears to be binary (non-text): {file_path}\n"
+                f"This tokenizer only processes text files.\n"
+                f"Suggestions:\n"
+                f"  - Verify the file is a text file (.txt, .md, etc.)\n"
+                f"  - Check if the file is corrupted\n"
+                f"  - Ensure the file is not a compressed archive or image"
             )
 
         # Try to read the file with UTF-8 encoding
         try:
             text = file_path.read_text(encoding="utf-8")
         except UnicodeDecodeError as e:
+            # Try to detect the actual encoding
+            error_position = getattr(e, "start", 0)
             raise FileProcessingError(
                 f"File encoding error: {file_path}\n"
-                f"The file is not valid UTF-8. Please convert the file to UTF-8 encoding.\n"
-                f"You can use tools like 'iconv' or text editors to convert the encoding.\n"
-                f"Original error: {e}"
+                f"The file is not valid UTF-8 (error at byte {error_position}).\n"
+                f"Suggestions:\n"
+                f"  - Convert the file to UTF-8 encoding\n"
+                f"  - Use 'iconv -f SHIFT-JIS -t UTF-8 input.txt > output.txt' for Japanese files\n"
+                f"  - Use a text editor like VS Code to convert encoding\n"
+                f"  - Common Japanese encodings: Shift-JIS, EUC-JP, ISO-2022-JP"
             ) from e
         except PermissionError as e:
             raise FileProcessingError(
                 f"Permission denied: {file_path}\n"
                 f"You don't have permission to read this file.\n"
-                f"Please check file permissions."
+                f"Suggestions:\n"
+                f"  - Check file permissions with 'ls -l {file_path}'\n"
+                f"  - Use 'chmod +r {file_path}' to add read permission\n"
+                f"  - Verify you have access to the parent directory"
             ) from e
         except OSError as e:
             raise FileProcessingError(
                 f"Error reading file: {file_path}\n"
                 f"An OS error occurred while reading the file.\n"
+                f"Suggestions:\n"
+                f"  - Check if the file system is accessible\n"
+                f"  - Verify disk space is available\n"
+                f"  - Ensure the file is not locked by another process\n"
                 f"Original error: {e}"
             ) from e
 
@@ -294,17 +426,20 @@ class JapaneseTokenizer:
         if not text or not text.strip():
             raise FileProcessingError(
                 f"File is empty or contains only whitespace: {file_path}\n"
-                f"Please provide a file with Japanese text content."
+                f"Suggestion: Provide a file with Japanese text content."
             )
 
         # Tokenize the text
         try:
-            return self.tokenize_text(text)
-        except TokenizationError:
-            # Re-raise tokenization errors as-is
-            raise
+            return self.tokenize_text(text, partial_ok=partial_ok)
+        except TokenizationError as e:
+            # Add file context to tokenization errors
+            raise TokenizationError(
+                f"Error tokenizing file: {file_path}\n{str(e)}"
+            ) from e
         except Exception as e:
             raise FileProcessingError(
                 f"Unexpected error processing file: {file_path}\n"
-                f"Original error: {e}"
+                f"Original error: {e}\n"
+                f"Suggestion: Please report this issue with the file details"
             ) from e

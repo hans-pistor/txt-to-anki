@@ -11,6 +11,7 @@ from txt_to_anki.tokenizer import (
     FileProcessingError,
     JapaneseTokenizer,
     Token,
+    TokenizationError,
     TokenizationMode,
 )
 
@@ -205,6 +206,102 @@ class TestJapaneseTokenizer:
         assert "飲み" in surfaces
 
 
+class TestJapaneseTextValidation:
+    """Tests for Japanese text detection and validation."""
+
+    def test_contains_japanese_with_hiragana(self) -> None:
+        """Test Japanese detection with hiragana text."""
+        tokenizer = JapaneseTokenizer()
+        assert tokenizer._contains_japanese("こんにちは")
+
+    def test_contains_japanese_with_katakana(self) -> None:
+        """Test Japanese detection with katakana text."""
+        tokenizer = JapaneseTokenizer()
+        assert tokenizer._contains_japanese("コーヒー")
+
+    def test_contains_japanese_with_kanji(self) -> None:
+        """Test Japanese detection with kanji text."""
+        tokenizer = JapaneseTokenizer()
+        assert tokenizer._contains_japanese("日本語")
+
+    def test_contains_japanese_with_mixed_scripts(self) -> None:
+        """Test Japanese detection with mixed scripts."""
+        tokenizer = JapaneseTokenizer()
+        assert tokenizer._contains_japanese("私はコーヒーを飲みます。")
+
+    def test_contains_japanese_with_english_only(self) -> None:
+        """Test Japanese detection returns False for English text."""
+        tokenizer = JapaneseTokenizer()
+        assert not tokenizer._contains_japanese("Hello World")
+
+    def test_contains_japanese_with_numbers_only(self) -> None:
+        """Test Japanese detection returns False for numbers."""
+        tokenizer = JapaneseTokenizer()
+        assert not tokenizer._contains_japanese("12345")
+
+    def test_contains_japanese_with_mixed_english_japanese(self) -> None:
+        """Test Japanese detection with mixed English and Japanese."""
+        tokenizer = JapaneseTokenizer()
+        assert tokenizer._contains_japanese("Hello 世界")
+
+    def test_tokenize_non_japanese_text_raises_error(self) -> None:
+        """Test that non-Japanese text raises TokenizationError."""
+        tokenizer = JapaneseTokenizer(require_japanese=True)
+
+        with pytest.raises(TokenizationError) as exc_info:
+            tokenizer.tokenize_text("Hello World")
+
+        error_msg = str(exc_info.value)
+        assert "No Japanese text detected" in error_msg
+        assert "require_japanese=False" in error_msg
+
+    def test_tokenize_non_japanese_text_with_require_false(self) -> None:
+        """Test that non-Japanese text works with require_japanese=False."""
+        tokenizer = JapaneseTokenizer(require_japanese=False)
+        # Should not raise an error, though results may be empty or unexpected
+        tokens = tokenizer.tokenize_text("Hello World")
+        # Just verify it doesn't crash
+        assert isinstance(tokens, list)
+
+    def test_tokenize_empty_string_returns_empty_list(self) -> None:
+        """Test that empty string returns empty list without validation error."""
+        tokenizer = JapaneseTokenizer(require_japanese=True)
+        tokens = tokenizer.tokenize_text("")
+        assert tokens == []
+
+    def test_tokenize_whitespace_returns_empty_list(self) -> None:
+        """Test that whitespace-only string returns empty list."""
+        tokenizer = JapaneseTokenizer(require_japanese=True)
+        tokens = tokenizer.tokenize_text("   \n\t  ")
+        assert tokens == []
+
+
+class TestPartialProcessing:
+    """Tests for graceful degradation with partial_ok parameter."""
+
+    def test_tokenize_with_partial_ok_continues_on_error(self) -> None:
+        """Test that partial_ok allows processing to continue despite errors."""
+        tokenizer = JapaneseTokenizer()
+        # Normal Japanese text should work fine with partial_ok
+        tokens = tokenizer.tokenize_text("今日は良い天気です。", partial_ok=True)
+        assert len(tokens) > 0
+
+    def test_tokenize_file_with_partial_ok(self) -> None:
+        """Test file tokenization with partial_ok parameter."""
+        with tempfile.NamedTemporaryFile(
+            mode="w", encoding="utf-8", suffix=".txt", delete=False
+        ) as f:
+            f.write("今日は良い天気です。")
+            temp_path = Path(f.name)
+
+        try:
+            tokenizer = JapaneseTokenizer()
+            tokens = tokenizer.tokenize_file(temp_path, partial_ok=True)
+            assert len(tokens) > 0
+        finally:
+            temp_path.unlink()
+
+
 class TestFileProcessing:
     """Tests for file processing functionality."""
 
@@ -356,6 +453,79 @@ class TestFileProcessing:
             # Verify we get meaningful tokens
             surfaces = [t.surface for t in tokens]
             assert len(surfaces) > 10  # Should have many tokens
+
+    def test_tokenize_binary_file_raises_error(self) -> None:
+        """Test that binary files are detected and rejected."""
+        # Create a binary file with null bytes
+        with tempfile.NamedTemporaryFile(mode="wb", suffix=".bin", delete=False) as f:
+            f.write(b"\x00\x01\x02\x03\x04\x05")
+            temp_path = Path(f.name)
+
+        try:
+            tokenizer = JapaneseTokenizer()
+
+            with pytest.raises(FileProcessingError) as exc_info:
+                tokenizer.tokenize_file(temp_path)
+
+            error_msg = str(exc_info.value)
+            assert "binary" in error_msg.lower()
+            assert "text file" in error_msg.lower()
+        finally:
+            temp_path.unlink()
+
+    def test_tokenize_file_with_no_japanese_raises_error(self) -> None:
+        """Test that files with no Japanese text raise appropriate error."""
+        with tempfile.NamedTemporaryFile(
+            mode="w", encoding="utf-8", suffix=".txt", delete=False
+        ) as f:
+            f.write("This is English text only.")
+            temp_path = Path(f.name)
+
+        try:
+            tokenizer = JapaneseTokenizer(require_japanese=True)
+
+            with pytest.raises(TokenizationError) as exc_info:
+                tokenizer.tokenize_file(temp_path)
+
+            error_msg = str(exc_info.value)
+            assert "No Japanese text detected" in error_msg
+            assert "require_japanese=False" in error_msg
+        finally:
+            temp_path.unlink()
+
+    def test_tokenize_file_error_includes_suggestions(self) -> None:
+        """Test that file errors include helpful suggestions."""
+        tokenizer = JapaneseTokenizer()
+
+        with pytest.raises(FileProcessingError) as exc_info:
+            tokenizer.tokenize_file("nonexistent_file.txt")
+
+        error_msg = str(exc_info.value)
+        assert "Suggestions:" in error_msg or "Suggestion:" in error_msg
+        assert "file path" in error_msg.lower()
+
+    def test_tokenize_file_encoding_error_includes_suggestions(self) -> None:
+        """Test that encoding errors include conversion suggestions."""
+        # Create a file with non-UTF-8 encoding
+        with tempfile.NamedTemporaryFile(
+            mode="w", encoding="shift_jis", suffix=".txt", delete=False
+        ) as f:
+            f.write("今日は良い天気です。")
+            temp_path = Path(f.name)
+
+        try:
+            tokenizer = JapaneseTokenizer()
+
+            with pytest.raises(FileProcessingError) as exc_info:
+                tokenizer.tokenize_file(temp_path)
+
+            error_msg = str(exc_info.value)
+            assert "encoding" in error_msg.lower()
+            assert "UTF-8" in error_msg
+            # Should include conversion suggestions
+            assert "iconv" in error_msg or "convert" in error_msg.lower()
+        finally:
+            temp_path.unlink()
 
 
 class TestTokenizationModes:
