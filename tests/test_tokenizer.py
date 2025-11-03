@@ -172,9 +172,7 @@ class TestJapaneseTokenizer:
         assert len(normalized_tokens) > 0
 
         # Verify the verb is normalized
-        verb_normalized = any(
-            "食べる" in dict_form for _, dict_form in normalized_tokens
-        )
+        verb_normalized = any("食べる" in dict_form for _, dict_form in normalized_tokens)
         assert verb_normalized
 
     def test_tokenize_with_readings(self) -> None:

@@ -86,11 +86,11 @@ Example of properly typed code:
 
    def process_text(input_text: str, max_length: int = 100) -> list[str]:
        """Process input text and return list of sentences.
-       
+
        Args:
            input_text: The text to process
            max_length: Maximum length per sentence
-           
+
        Returns:
            List of processed sentences
        """

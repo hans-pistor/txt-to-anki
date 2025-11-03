@@ -28,7 +28,7 @@ This document establishes the technical standards and conventions for the text-t
 - **Configuration**: Strict type checking enabled
 - **Usage**: All functions, methods, and variables MUST have type hints
 - **Command**: `mypy src/`
-- **Standards**: 
+- **Standards**:
   - No `Any` types allowed without explicit justification
   - All function parameters and return types must be annotated
   - Class attributes must be typed

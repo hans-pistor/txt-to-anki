@@ -76,7 +76,7 @@ class Token:
     normalized_form: str   # Sudachi's normalized form
     features: List[str]    # Additional linguistic features
     position: int          # Position in original text
-    
+
     @property
     def dictionary_form(self) -> str:
         """Returns the dictionary form, prioritizing base_form over surface."""
@@ -94,7 +94,7 @@ from typing import Protocol, List
 
 class TokenFilter(Protocol):
     """Protocol for token filtering implementations."""
-    
+
     def filter(self, tokens: List[Token]) -> List[Token]:
         """Filter tokens based on specific criteria."""
         ...
@@ -118,7 +118,7 @@ class TokenFilter(Protocol):
 ### Input Processing Flow
 
 1. **File Reading**: UTF-8 encoded text files
-2. **Text Preprocessing**: 
+2. **Text Preprocessing**:
    - Encoding validation and conversion
    - Japanese text detection and extraction
    - Whitespace normalization

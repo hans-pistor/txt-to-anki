@@ -21,18 +21,18 @@ app = typer.Typer(
 @app.command()
 def convert() -> None:
     """Convert a text file to Anki deck format.
-    
+
     This is the main command for converting plain text files into Anki deck formats
     suitable for spaced repetition learning. The conversion process extracts content
     from the input and formats it appropriately for Anki.
-    
+
     Examples:
         Basic usage:
-        
+
         .. code-block:: bash
-        
+
             txt-to-anki
-    
+
     Note:
         This is currently a placeholder implementation. The actual conversion
         logic will be implemented in future versions.
